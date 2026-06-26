@@ -76,4 +76,21 @@ while not game.round.finished:
     if continue_game != "y":
         break
 
-print("Round ended.")
+print()
+print("ROUND RESULTS")
+print("----------------------------")
+
+scores = game.end_round()
+
+for player in players:
+
+    print(
+        f"{player.name}: "
+        f"Round={scores[player.name]} "
+        f"Total={player.total_score}"
+    )
+
+winner = min(players, key=lambda p: p.total_score)
+
+print()
+print(f"Current Leader: {winner.name}")
