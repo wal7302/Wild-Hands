@@ -1,15 +1,20 @@
 from engine.game.round import Round
 from engine.game.score import ScoreEngine
 from engine.game.match import Match
+from engine.game.game_modes import GameMode, GameModeConfig
 
 
 class Game:
 
-    def __init__(self, players):
+    def __init__(self, players, mode=GameMode.QUICK, starting_round=3):
 
         self.players = players
-        self.round_number = 3
+        self.mode = mode
+        self.rounds_to_play = GameModeConfig.rounds_for(mode, starting_round)
+        self.current_round_index = 0
+        self.round_number = self.rounds_to_play[self.current_round_index]
         self.round = None
+        self.match = Match(players)
 
     def start_round(self):
 
@@ -20,10 +25,20 @@ class Game:
 
         self.round.deal()
 
+    def has_next_round(self):
+
+        return self.current_round_index < len(self.rounds_to_play) - 1
+
     def next_round(self):
 
-        self.round_number += 1
+        if not self.has_next_round():
+            return False
+
+        self.current_round_index += 1
+        self.round_number = self.rounds_to_play[self.current_round_index]
         self.start_round()
+
+        return True
 
     def end_round(self):
 
@@ -38,7 +53,12 @@ class Game:
             scores[player.name] = score
 
         self.match.add_round(
-    self.round_number,
-    scores
-)
+            self.round_number,
+            scores
+        )
+
         return scores
+
+    def winner(self):
+
+        return self.match.winner()
