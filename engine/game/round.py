@@ -11,6 +11,7 @@ class Round:
         self.wild_rank = cards_dealt
         self.deck = Deck()
         self.deck.set_wild_rank(cards_dealt)
+        self.discard_pile = []
         self.current_player_index = 0
         self.turn_count = 0
         self.finished = False
@@ -35,7 +36,11 @@ class Round:
 
     def start_turn(self):
 
-        return Turn(self.current_player, self.deck)
+        return Turn(self.current_player, self)
+
+    def add_discard(self, card):
+
+        self.discard_pile.append(card)
 
     def end_turn(self):
 
