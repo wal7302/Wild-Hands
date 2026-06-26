@@ -83,7 +83,7 @@ while True:
 
         if HandAnalyzer.can_go_out(player.hand):
             print(f"{player.name} went out!")
-            game.round.finished = True
+            game.round.mark_player_went_out(player)
             break
 
         print(f"Best score after discard: {ScoreEngine.best_score(player.hand)}")
@@ -96,6 +96,18 @@ while True:
             if continue_game != "y":
                 game.round.finished = True
                 break
+
+    print()
+    print("ROUND HIGHLIGHTS")
+    print("----------------------------")
+
+    highlights = game.round.events.highlights()
+
+    if not highlights:
+        print("No major highlights this round.")
+    else:
+        for event in highlights:
+            print(event.message)
 
     print()
     print("ROUND RESULTS")
