@@ -1,4 +1,5 @@
 from engine.models.player import Player
+from engine.ai.ai_player import AIPlayer
 from engine.game.game import Game
 from engine.game.score import ScoreEngine
 from engine.game.hand_analyzer import HandAnalyzer
@@ -20,7 +21,7 @@ def show_discard_pile(round_state):
 
 players = [
     Player("Tasha"),
-    Player("Grace"),
+    AIPlayer("Grace", personality="Host"),
 ]
 
 game = Game(players)
@@ -56,7 +57,11 @@ while not game.round.finished:
 
     print(f"Best current score: {ScoreEngine.best_score(player.hand)}")
 
-    discard_index = int(input("Choose card index to discard: "))
+    if hasattr(player, "choose_discard_index"):
+        discard_index = player.choose_discard_index()
+        print(f"{player.name} chooses to discard index {discard_index}")
+    else:
+        discard_index = int(input("Choose card index to discard: "))
 
     discarded = turn.discard(discard_index)
 
@@ -71,10 +76,11 @@ while not game.round.finished:
 
     game.round.end_turn()
 
-    continue_game = input("Continue? y/n: ").lower().strip()
+    if not hasattr(player, "choose_discard_index"):
+        continue_game = input("Continue? y/n: ").lower().strip()
 
-    if continue_game != "y":
-        break
+        if continue_game != "y":
+            break
 
 print()
 print("ROUND RESULTS")
@@ -83,7 +89,6 @@ print("----------------------------")
 scores = game.end_round()
 
 for player in players:
-
     print(
         f"{player.name}: "
         f"Round={scores[player.name]} "
