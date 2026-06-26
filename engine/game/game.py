@@ -37,4 +37,8 @@ class Game:
 
             scores[player.name] = score
 
+        self.match.add_round(
+    self.round_number,
+    scores
+)
         return scores
