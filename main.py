@@ -1,6 +1,7 @@
 from engine.models.player import Player
 from engine.ai.ai_player import AIPlayer
 from engine.game.game import Game
+from engine.game.game_modes import GameMode
 from engine.game.score import ScoreEngine
 from engine.game.hand_analyzer import HandAnalyzer
 
@@ -24,78 +25,107 @@ players = [
     AIPlayer("Grace", personality="Host"),
 ]
 
-game = Game(players)
-game.start_round()
+game = Game(
+    players,
+    mode=GameMode.QUICK,
+    starting_round=3
+)
 
 print("Welcome to Wild Hands")
-print(f"Round: {game.round_number}")
-print(f"Wild Rank: {game.round.wild_rank}")
 print("* means wild")
 print()
 
-while not game.round.finished:
+game.start_round()
 
-    player = game.round.current_player
-    turn = game.round.start_turn()
-
-    print("----------------------------------")
-    print(f"{player.name}'s turn")
-    print(show_discard_pile(game.round))
-    print()
-    print("Hand:")
-    print(show_hand(player))
-
-    drawn = turn.draw()
-
-    if drawn is None:
-        print("Deck is empty. Round cannot continue yet.")
-        break
+while True:
 
     print()
-    print(f"Drew: {drawn.display}{'*' if drawn.is_wild else ''}")
-    print(show_hand(player))
+    print("==================================")
+    print(f"ROUND {game.round_number}")
+    print(f"Wild Rank: {game.round.wild_rank}")
+    print("==================================")
+    print()
 
-    print(f"Best current score: {ScoreEngine.best_score(player.hand)}")
+    while not game.round.finished:
 
-    if hasattr(player, "choose_discard_index"):
-        discard_index = player.choose_discard_index()
-        print(f"{player.name} chooses to discard index {discard_index}")
-    else:
-        discard_index = int(input("Choose card index to discard: "))
+        player = game.round.current_player
+        turn = game.round.start_turn()
 
-    discarded = turn.discard(discard_index)
+        print("----------------------------------")
+        print(f"{player.name}'s turn")
+        print(show_discard_pile(game.round))
+        print()
+        print("Hand:")
+        print(show_hand(player))
 
-    print(f"Discarded: {discarded.display}{'*' if discarded.is_wild else ''}")
+        drawn = turn.draw()
 
-    if HandAnalyzer.can_go_out(player.hand):
-        print(f"{player.name} went out!")
-        game.round.finished = True
-        break
-
-    print(f"Best score after discard: {ScoreEngine.best_score(player.hand)}")
-
-    game.round.end_turn()
-
-    if not hasattr(player, "choose_discard_index"):
-        continue_game = input("Continue? y/n: ").lower().strip()
-
-        if continue_game != "y":
+        if drawn is None:
+            print("Deck is empty. Round cannot continue yet.")
+            game.round.finished = True
             break
 
+        print()
+        print(f"Drew: {drawn.display}{'*' if drawn.is_wild else ''}")
+        print(show_hand(player))
+
+        print(f"Best current score: {ScoreEngine.best_score(player.hand)}")
+
+        if hasattr(player, "choose_discard_index"):
+            discard_index = player.choose_discard_index()
+            print(f"{player.name} chooses to discard index {discard_index}")
+        else:
+            discard_index = int(input("Choose card index to discard: "))
+
+        discarded = turn.discard(discard_index)
+
+        print(f"Discarded: {discarded.display}{'*' if discarded.is_wild else ''}")
+
+        if HandAnalyzer.can_go_out(player.hand):
+            print(f"{player.name} went out!")
+            game.round.finished = True
+            break
+
+        print(f"Best score after discard: {ScoreEngine.best_score(player.hand)}")
+
+        game.round.end_turn()
+
+        if not hasattr(player, "choose_discard_index"):
+            continue_game = input("Continue? y/n: ").lower().strip()
+
+            if continue_game != "y":
+                game.round.finished = True
+                break
+
+    print()
+    print("ROUND RESULTS")
+    print("----------------------------")
+
+    scores = game.end_round()
+
+    for player in players:
+        print(
+            f"{player.name}: "
+            f"Round={scores[player.name]} "
+            f"Total={player.total_score}"
+        )
+
+    if not game.has_next_round():
+        break
+
+    continue_match = input("Continue to next round? y/n: ").lower().strip()
+
+    if continue_match != "y":
+        break
+
+    game.next_round()
+
 print()
-print("ROUND RESULTS")
+print("MATCH COMPLETE")
 print("----------------------------")
 
-scores = game.end_round()
-
 for player in players:
-    print(
-        f"{player.name}: "
-        f"Round={scores[player.name]} "
-        f"Total={player.total_score}"
-    )
-
-winner = min(players, key=lambda p: p.total_score)
+    print(f"{player.name}: {player.total_score}")
 
 print()
-print(f"Current Leader: {winner.name}")
+print(f"Winner: {game.winner().name}")
