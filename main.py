@@ -6,7 +6,7 @@ from engine.game.hand_analyzer import HandAnalyzer
 
 def show_hand(player):
     return " | ".join(
-        f"{index}: {card.display}"
+        f"{index}: {card.display}{'*' if card.is_wild else ''}"
         for index, card in enumerate(player.hand)
     )
 
@@ -29,6 +29,7 @@ game.start_round()
 print("Welcome to Wild Hands")
 print(f"Round: {game.round_number}")
 print(f"Wild Rank: {game.round.wild_rank}")
+print("* means wild")
 print()
 
 while not game.round.finished:
@@ -50,21 +51,23 @@ while not game.round.finished:
         break
 
     print()
-    print(f"Drew: {drawn.display}")
+    print(f"Drew: {drawn.display}{'*' if drawn.is_wild else ''}")
     print(show_hand(player))
+
+    print(f"Best current score: {ScoreEngine.best_score(player.hand)}")
 
     discard_index = int(input("Choose card index to discard: "))
 
     discarded = turn.discard(discard_index)
 
-    print(f"Discarded: {discarded.display}")
+    print(f"Discarded: {discarded.display}{'*' if discarded.is_wild else ''}")
 
     if HandAnalyzer.can_go_out(player.hand):
         print(f"{player.name} went out!")
         game.round.finished = True
         break
 
-    print(f"Current score: {ScoreEngine.calculate(player.hand)}")
+    print(f"Best score after discard: {ScoreEngine.best_score(player.hand)}")
 
     game.round.end_turn()
 
