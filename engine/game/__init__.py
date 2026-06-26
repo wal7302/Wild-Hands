@@ -1,1 +1,1 @@
-
+self.match = Match(players)
