@@ -9,10 +9,9 @@ class Turn:
 
     def draw(self):
 
-        self.drawn_card = self.round_state.deck.draw()
+        self.drawn_card = self.round_state.draw_from_deck()
 
         if self.drawn_card:
-            self.drawn_card.is_wild = self.drawn_card.rank == self.round_state.wild_rank
             self.player.draw(self.drawn_card)
 
         return self.drawn_card
