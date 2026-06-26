@@ -3,19 +3,21 @@ class Turn:
     def __init__(self, player, deck):
 
         self.player = player
-
         self.deck = deck
+        self.drawn_card = None
+        self.discarded_card = None
 
     def draw(self):
 
-        card = self.deck.draw()
+        self.drawn_card = self.deck.draw()
 
-        if card:
+        if self.drawn_card:
+            self.player.draw(self.drawn_card)
 
-            self.player.draw(card)
-
-        return card
+        return self.drawn_card
 
     def discard(self, index):
 
-        return self.player.discard(index)
+        self.discarded_card = self.player.discard(index)
+
+        return self.discarded_card
