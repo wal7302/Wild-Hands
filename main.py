@@ -4,20 +4,17 @@ from engine.game.score import ScoreEngine
 
 
 def show_hand(player):
-    cards = []
-
-    for index, card in enumerate(player.hand):
-        cards.append(f"{index}: {card.display}")
-
-    return " | ".join(cards)
+    return " | ".join(
+        f"{index}: {card.display}"
+        for index, card in enumerate(player.hand)
+    )
 
 
 def show_discard_pile(round_state):
     if not round_state.discard_pile:
         return "Discard pile is empty."
 
-    top = round_state.discard_pile[-1]
-    return f"Top discard: {top.display}"
+    return f"Top discard: {round_state.discard_pile[-1].display}"
 
 
 players = [
@@ -33,32 +30,40 @@ print(f"Round: {game.round_number}")
 print(f"Wild Rank: {game.round.wild_rank}")
 print()
 
-for player in players:
-    print(f"{player.name}'s hand:")
-    print(show_hand(player))
+while not game.round.finished:
+
+    player = game.round.current_player
+    turn = game.round.start_turn()
+
+    print("----------------------------------")
+    print(f"{player.name}'s turn")
+    print(show_discard_pile(game.round))
     print()
+    print("Hand:")
+    print(show_hand(player))
 
-turn = game.round.start_turn()
+    drawn = turn.draw()
 
-print(f"{game.round.current_player.name}'s turn")
-print(show_discard_pile(game.round))
+    if drawn is None:
+        print("Deck is empty. Round cannot continue yet.")
+        break
 
-drawn = turn.draw()
+    print()
+    print(f"Drew: {drawn.display}")
+    print(show_hand(player))
 
-print(f"Drew: {drawn.display}")
-print(show_hand(game.round.current_player))
+    discard_index = int(input("Choose card index to discard: "))
 
-discard_index = int(input("Choose card index to discard: "))
+    discarded = turn.discard(discard_index)
 
-discarded = turn.discard(discard_index)
+    print(f"Discarded: {discarded.display}")
+    print(f"Current score: {ScoreEngine.calculate(player.hand)}")
 
-print(f"Discarded: {discarded.display}")
-print(show_discard_pile(game.round))
+    game.round.end_turn()
 
-score = ScoreEngine.calculate(game.round.current_player.hand)
+    continue_game = input("Continue? y/n: ").lower().strip()
 
-print(f"Current hand score: {score}")
+    if continue_game != "y":
+        break
 
-game.round.end_turn()
-
-print(f"Next player: {game.round.current_player.name}")
+print("Game stopped.")
