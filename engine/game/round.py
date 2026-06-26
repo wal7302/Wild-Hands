@@ -1,6 +1,7 @@
 from engine.models.deck import Deck
 from engine.game.turn import Turn
 from engine.game.events import EventLog, GameEventType
+from engine.social.table_talk import TableTalkLibrary
 
 
 class Round:
@@ -81,10 +82,22 @@ class Round:
         )
 
         if card.is_wild:
+            reactions = [
+                phrase.text
+                for phrase in TableTalkLibrary.wild_toss_reactions()
+            ]
+
             self.events.add(
                 GameEventType.WILD_DISCARDED,
                 player_name=self.current_player.name,
-                message=f"{self.current_player.name} discarded a wild!"
+                message=f"{self.current_player.name} discarded a wild!",
+                metadata={"reactions": reactions}
+            )
+
+            self.events.add(
+                GameEventType.TABLE_TALK_TRIGGERED,
+                message="Wild Toss reactions unlocked temporarily.",
+                metadata={"available_reactions": reactions}
             )
 
     def mark_player_went_out(self, player):
