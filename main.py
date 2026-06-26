@@ -12,6 +12,14 @@ def show_hand(player):
     return " | ".join(cards)
 
 
+def show_discard_pile(round_state):
+    if not round_state.discard_pile:
+        return "Discard pile is empty."
+
+    top = round_state.discard_pile[-1]
+    return f"Top discard: {top.display}"
+
+
 players = [
     Player("Tasha"),
     Player("Grace"),
@@ -33,6 +41,7 @@ for player in players:
 turn = game.round.start_turn()
 
 print(f"{game.round.current_player.name}'s turn")
+print(show_discard_pile(game.round))
 
 drawn = turn.draw()
 
@@ -44,6 +53,7 @@ discard_index = int(input("Choose card index to discard: "))
 discarded = turn.discard(discard_index)
 
 print(f"Discarded: {discarded.display}")
+print(show_discard_pile(game.round))
 
 score = ScoreEngine.calculate(game.round.current_player.hand)
 
