@@ -62,3 +62,18 @@ class Game:
     def winner(self):
 
         return self.match.winner()
+
+    def match_results(self):
+
+        ordered_players = sorted(
+            self.players,
+            key=lambda player: player.total_score
+        )
+
+        return [
+            {
+                "name": player.name,
+                "total_score": player.total_score,
+            }
+            for player in ordered_players
+        ]
