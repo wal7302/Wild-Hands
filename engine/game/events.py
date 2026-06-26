@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 
@@ -10,6 +10,7 @@ class GameEventType:
     ROUND_ENDED = "round_ended"
     CARD_DRAWN = "card_drawn"
     CARD_DISCARDED = "card_discarded"
+    TABLE_TALK_TRIGGERED = "table_talk_triggered"
 
 
 @dataclass
@@ -18,8 +19,8 @@ class GameEvent:
     event_type: str
     player_name: str | None = None
     message: str | None = None
-    metadata: dict | None = None
-    created_at: datetime = datetime.now()
+    metadata: dict | None = field(default_factory=dict)
+    created_at: datetime = field(default_factory=datetime.now)
 
 
 class EventLog:
@@ -49,5 +50,6 @@ class EventLog:
             if event.event_type in [
                 GameEventType.WILD_DISCARDED,
                 GameEventType.PLAYER_WENT_OUT,
+                GameEventType.TABLE_TALK_TRIGGERED,
             ]
         ]
