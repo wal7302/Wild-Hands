@@ -25,6 +25,7 @@ class PlayerProfile:
     gifts_sent: int = 0
 
     collections: dict = field(default_factory=dict)
+    achievements: list = field(default_factory=list)
 
     def display_for_public_game(self):
         return self.display_name
