@@ -9,7 +9,7 @@ class HandAnalyzer:
     def has_valid_group(cards):
         for size in range(3, len(cards) + 1):
             for group in combinations(cards, size):
-                if MeldEngine.is_valid_set(list(group)):
+                if MeldEngine.is_valid_meld(list(group)):
                     return True
 
         return False
@@ -19,4 +19,4 @@ class HandAnalyzer:
         if len(cards) < 3:
             return False
 
-        return MeldEngine.is_valid_set(cards)
+        return MeldEngine.is_valid_meld(cards)
