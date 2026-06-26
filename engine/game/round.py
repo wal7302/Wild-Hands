@@ -1,5 +1,6 @@
 from engine.models.deck import Deck
 from engine.game.turn import Turn
+from engine.game.events import EventLog, GameEventType
 
 
 class Round:
@@ -15,6 +16,12 @@ class Round:
         self.current_player_index = 0
         self.turn_count = 0
         self.finished = False
+        self.events = EventLog()
+
+        self.events.add(
+            GameEventType.ROUND_STARTED,
+            message=f"Round {cards_dealt} started. {cards_dealt}s are wild."
+        )
 
     def deal(self):
 
@@ -65,6 +72,30 @@ class Round:
     def add_discard(self, card):
 
         self.discard_pile.append(card)
+
+        self.events.add(
+            GameEventType.CARD_DISCARDED,
+            player_name=self.current_player.name,
+            message=f"{self.current_player.name} discarded {card.display}.",
+            metadata={"card": card.display}
+        )
+
+        if card.is_wild:
+            self.events.add(
+                GameEventType.WILD_DISCARDED,
+                player_name=self.current_player.name,
+                message=f"{self.current_player.name} discarded a wild!"
+            )
+
+    def mark_player_went_out(self, player):
+
+        self.finished = True
+
+        self.events.add(
+            GameEventType.PLAYER_WENT_OUT,
+            player_name=player.name,
+            message=f"{player.name} went out!"
+        )
 
     def end_turn(self):
 
