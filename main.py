@@ -4,8 +4,12 @@ from engine.game.score import ScoreEngine
 
 
 def show_hand(player):
-    cards = [card.display for card in player.hand]
-    return ", ".join(cards)
+    cards = []
+
+    for index, card in enumerate(player.hand):
+        cards.append(f"{index}: {card.display}")
+
+    return " | ".join(cards)
 
 
 players = [
@@ -24,5 +28,27 @@ print()
 for player in players:
     print(f"{player.name}'s hand:")
     print(show_hand(player))
-    print(f"Current score: {ScoreEngine.calculate(player.hand)}")
     print()
+
+turn = game.round.start_turn()
+
+print(f"{game.round.current_player.name}'s turn")
+
+drawn = turn.draw()
+
+print(f"Drew: {drawn.display}")
+print(show_hand(game.round.current_player))
+
+discard_index = int(input("Choose card index to discard: "))
+
+discarded = turn.discard(discard_index)
+
+print(f"Discarded: {discarded.display}")
+
+score = ScoreEngine.calculate(game.round.current_player.hand)
+
+print(f"Current hand score: {score}")
+
+game.round.end_turn()
+
+print(f"Next player: {game.round.current_player.name}")
