@@ -6,17 +6,36 @@ from engine.game.meld import MeldEngine
 class HandAnalyzer:
 
     @staticmethod
-    def has_valid_group(cards):
-        for size in range(3, len(cards) + 1):
-            for group in combinations(cards, size):
-                if MeldEngine.is_valid_meld(list(group)):
-                    return True
-
-        return False
-
-    @staticmethod
     def can_go_out(cards):
         if len(cards) < 3:
             return False
 
-        return MeldEngine.is_valid_meld(cards)
+        return HandAnalyzer._can_partition_into_melds(tuple(cards))
+
+    @staticmethod
+    def _can_partition_into_melds(cards):
+        cards = list(cards)
+
+        if len(cards) == 0:
+            return True
+
+        if len(cards) < 3:
+            return False
+
+        first_card = cards[0]
+        remaining_cards = cards[1:]
+
+        for size in range(2, len(remaining_cards) + 1):
+            for combo in combinations(remaining_cards, size):
+                group = [first_card] + list(combo)
+
+                if MeldEngine.is_valid_meld(group):
+                    leftovers = cards.copy()
+
+                    for card in group:
+                        leftovers.remove(card)
+
+                    if HandAnalyzer._can_partition_into_melds(tuple(leftovers)):
+                        return True
+
+        return False
