@@ -1,5 +1,6 @@
 from engine.game.round import Round
 from engine.game.score import ScoreEngine
+from engine.game.match import Match
 
 
 class Game:
