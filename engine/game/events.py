@@ -11,6 +11,7 @@ class GameEventType:
     CARD_DRAWN = "card_drawn"
     CARD_DISCARDED = "card_discarded"
     TABLE_TALK_TRIGGERED = "table_talk_triggered"
+    GIFT_SENT = "gift_sent"
 
 
 @dataclass
@@ -51,5 +52,6 @@ class EventLog:
                 GameEventType.WILD_DISCARDED,
                 GameEventType.PLAYER_WENT_OUT,
                 GameEventType.TABLE_TALK_TRIGGERED,
+                GameEventType.GIFT_SENT,
             ]
         ]
