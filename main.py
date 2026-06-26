@@ -1,6 +1,7 @@
 from engine.models.player import Player
 from engine.game.game import Game
 from engine.game.score import ScoreEngine
+from engine.game.hand_analyzer import HandAnalyzer
 
 
 def show_hand(player):
@@ -57,6 +58,12 @@ while not game.round.finished:
     discarded = turn.discard(discard_index)
 
     print(f"Discarded: {discarded.display}")
+
+    if HandAnalyzer.can_go_out(player.hand):
+        print(f"{player.name} went out!")
+        game.round.finished = True
+        break
+
     print(f"Current score: {ScoreEngine.calculate(player.hand)}")
 
     game.round.end_turn()
@@ -66,4 +73,4 @@ while not game.round.finished:
     if continue_game != "y":
         break
 
-print("Game stopped.")
+print("Round ended.")
