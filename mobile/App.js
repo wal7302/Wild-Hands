@@ -36,7 +36,7 @@ export default function App() {
   const [round, setRound] = useState(1);
   const [message, setMessage] = useState("Your turn. Draw a card.");
 
-  function drawCard() {
+  function drawFromDeck() {
     if (currentTurn !== "player") {
       setMessage("Wait your turn.");
       return;
@@ -61,6 +61,31 @@ export default function App() {
     setMessage("Choose a card to discard.");
   }
 
+function takeDiscard() {
+  if (currentTurn !== "player") {
+    setMessage("Wait your turn.");
+    return;
+  }
+
+  if (hasDrawn) {
+    setMessage("You already drew. Now discard.");
+    return;
+  }
+
+  if (discardPile.length === 0) {
+    setMessage("No discarded card to take.");
+    return;
+  }
+
+  const nextDiscardPile = [...discardPile];
+  const card = nextDiscardPile.pop();
+
+  setDiscardPile(nextDiscardPile);
+  setPlayerHand([...playerHand, card]);
+  setHasDrawn(true);
+  setMessage("You picked up the discard. Now choose a card to discard.");
+}
+  
   function discardCard() {
     if (currentTurn !== "player") {
       setMessage("Wait your turn.");
@@ -208,8 +233,12 @@ export default function App() {
       </ScrollView>
 
       <View style={styles.buttons}>
-        <Pressable style={styles.button} onPress={drawCard}>
-          <Text style={styles.buttonText}>Draw</Text>
+        <Pressable style={styles.button} onPress={drawFromDeck}>
+          <Text style={styles.buttonText}>Draw Deck</Text>
+        </Pressable>
+
+        <Pressable style={styles.button} onPress={takeDiscard}>
+          <Text style={styles.buttonText}>Take Discard</Text>
         </Pressable>
 
         <Pressable style={styles.button} onPress={discardCard}>
@@ -342,8 +371,10 @@ const styles = StyleSheet.create({
   },
   buttons: {
     flexDirection: "row",
-    gap: 14,
+    gap: 10,
     marginTop: 18,
+    flexWrap: "wrap",
+    justifyContent: "center",
   },
   button: {
     backgroundColor: "#7A1E2C",
