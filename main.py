@@ -7,6 +7,10 @@ from engine.game.hand_analyzer import HandAnalyzer
 from engine.persistence.game_serializer import GameSerializer
 from engine.persistence.save_game import SaveGame
 from engine.game.round_reveal import RoundReveal
+from engine.game.match_summary import MatchSummary
+
+
+
 
 def show_hand(player):
     return " | ".join(
@@ -162,6 +166,25 @@ for player in players:
 
 print()
 print(f"Winner: {game.winner().name}")
+
+summary = MatchSummary.build(game)
+
+print()
+print("MATCH HIGHLIGHTS")
+print("----------------------------")
+
+if not summary["highlights"]:
+    print("No match highlights yet.")
+else:
+    for highlight in summary["highlights"]:
+        print(
+            f"{highlight['title']} "
+            f"(Round {highlight['round']}): "
+            f"{highlight['description']}"
+        )
+
+print()
+print(f"Wild Toss Count: {summary['wild_toss_count']}")
 
 SaveGame.save(
     "last_game.json",
