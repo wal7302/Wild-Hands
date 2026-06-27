@@ -9,6 +9,7 @@ class MatchHighlights:
     def from_match(match):
 
         highlights = []
+        seen = set()
 
         for round_record in match.rounds:
 
@@ -16,6 +17,18 @@ class MatchHighlights:
             events = round_record.get("events", [])
 
             for event in events:
+
+                key = (
+                    round_number,
+                    event.event_type,
+                    event.player_name,
+                    event.message,
+                )
+
+                if key in seen:
+                    continue
+
+                seen.add(key)
 
                 if event.event_type == GameEventType.WILD_DISCARDED:
                     highlights.append(
@@ -42,14 +55,24 @@ class MatchHighlights:
     @staticmethod
     def wild_toss_count(match):
 
+        seen = set()
         count = 0
 
         for round_record in match.rounds:
 
+            round_number = round_record.get("round")
             events = round_record.get("events", [])
 
             for event in events:
-                if event.event_type == GameEventType.WILD_DISCARDED:
+                key = (
+                    round_number,
+                    event.event_type,
+                    event.player_name,
+                    event.message,
+                )
+
+                if event.event_type == GameEventType.WILD_DISCARDED and key not in seen:
+                    seen.add(key)
                     count += 1
 
         return count
