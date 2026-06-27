@@ -1,45 +1,119 @@
-class_name CardVisual
 extends Area2D
 
+signal selected(card)
+signal deselected(card)
+
+var card_id := ""
 var rank := ""
 var suit := ""
 var is_wild := false
-var face_up := false
-var card_size := Vector2(58, 82)
+var is_face_down := false
+var is_selected := false
+
+var original_position := Vector2.ZERO
+
+var background : ColorRect
+var rank_label : Label
+var suit_label : Label
+var wild_label : Label
 
 func _ready():
-	var shape := CollisionShape2D.new()
-	var rect := RectangleShape2D.new()
-	rect.size = card_size
-	shape.shape = rect
-	shape.position = card_size / 2
-	add_child(shape)
-	queue_redraw()
 
-func set_card_back():
-	face_up = false
-	queue_redraw()
+	input_pickable = true
 
-func set_card_face(new_rank: String, new_suit: String, wild: bool = false):
-	rank = new_rank
-	suit = new_suit
-	is_wild = wild
-	face_up = true
-	queue_redraw()
+	background = ColorRect.new()
+	background.size = Vector2(72,104)
+	background.color = Color.WHITE
+	add_child(background)
 
-func _draw():
-	var rect := Rect2(Vector2.ZERO, card_size)
+	rank_label = Label.new()
+	rank_label.position = Vector2(8,8)
+	add_child(rank_label)
 
-	draw_rect(rect, Color("#FFFDF7"), true)
-	draw_rect(rect, Color("#7A1E2C"), false, 3)
+	suit_label = Label.new()
+	suit_label.position = Vector2(8,32)
+	add_child(suit_label)
 
-	if face_up:
-		var suit_color = Color("#B21E35") if suit in ["♥", "♦"] else Color("#1E1A18")
-		draw_string(ThemeDB.fallback_font, Vector2(8, 22), rank, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, suit_color)
-		draw_string(ThemeDB.fallback_font, Vector2(20, 52), suit, HORIZONTAL_ALIGNMENT_LEFT, -1, 28, suit_color)
+	wild_label = Label.new()
+	wild_label.position = Vector2(8,78)
+	wild_label.text = ""
+	add_child(wild_label)
 
-		if is_wild:
-			draw_rect(Rect2(12, 60, 34, 14), Color("#7A1E2C"), true)
-			draw_string(ThemeDB.fallback_font, Vector2(15, 72), "WILD", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("#D8A441"))
+func configure(data):
+
+	card_id = data.get("id","")
+	rank = data.get("rank","")
+	suit = data.get("suit","")
+	is_wild = data.get("wild",false)
+
+	update_visual()
+
+func update_visual():
+
+	if is_face_down:
+
+		background.color = Color("#6B3F24")
+
+		rank_label.text = ""
+
+		suit_label.text = ""
+
+		wild_label.text = ""
+
+		return
+
+	background.color = Color.WHITE
+
+	rank_label.text = rank
+
+	suit_label.text = suit
+
+	if is_wild:
+		wild_label.text = "WILD"
 	else:
-		draw_string(ThemeDB.fallback_font, Vector2(17, 52), "◆", HORIZONTAL_ALIGNMENT_LEFT, -1, 32, Color("#7A1E2C"))
+		wild_label.text = ""
+
+func set_face_down():
+
+	is_face_down = true
+	update_visual()
+
+func set_face_up():
+
+	is_face_down = false
+	update_visual()
+
+func select():
+
+	if is_selected:
+		return
+
+	is_selected = true
+
+	original_position = position
+
+	position.y -= 22
+
+	selected.emit(self)
+
+func deselect():
+
+	if not is_selected:
+		return
+
+	is_selected = false
+
+	position = original_position
+
+	deselected.emit(self)
+
+func _input_event(_viewport,event,_shape):
+
+	if event is InputEventMouseButton:
+
+		if event.pressed:
+
+			if is_selected:
+				deselect()
+			else:
+				select()
