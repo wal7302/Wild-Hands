@@ -9,175 +9,163 @@ const COLORS = {
   cream: "#F4E7D3",
   gold: "#D8A441",
   ink: "#2E1B12",
-  card: "#FFFDF7",
-  feltShadow: "#24130B"
+  card: "#FFFDF7"
 };
 
-const PLAYERS = [
-  { name: "Grace", seat: "top", emoji: "🍷" },
-  { name: "Rico", seat: "left", emoji: "😈" },
-  { name: "Nikki", seat: "right", emoji: "🕵️" },
-  { name: "You", seat: "bottom", emoji: "🙂" }
+const START_HAND = [
+  { id: "c1", rank: "3", suit: "♥", wild: true },
+  { id: "c2", rank: "7", suit: "♣", wild: false },
+  { id: "c3", rank: "K", suit: "♦", wild: false }
 ];
 
-const PLAYER_HAND = [
-  { rank: "3", suit: "♥", wild: true },
-  { rank: "7", suit: "♣", wild: false },
-  { rank: "K", suit: "♦", wild: false }
+const DRAW_PILE = [
+  { id: "c4", rank: "8", suit: "♥", wild: false },
+  { id: "c5", rank: "3", suit: "♠", wild: true },
+  { id: "c6", rank: "Q", suit: "♣", wild: false }
 ];
 
-function FlyingCard({ delay, finalX, finalY, rotate, face, showFace }) {
-  const x = useRef(new Animated.Value(0)).current;
-  const y = useRef(new Animated.Value(-120)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.65)).current;
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      Animated.parallel([
-        Animated.spring(x, { toValue: finalX, friction: 7, tension: 75, useNativeDriver: true }),
-        Animated.spring(y, { toValue: finalY, friction: 7, tension: 75, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }),
-        Animated.spring(scale, { toValue: 1, friction: 5, useNativeDriver: true })
-      ]).start();
-    }, delay);
-
-    return () => clearTimeout(timer);
-  }, [delay, finalX, finalY, opacity, scale, x, y]);
-
-  return (
-    <Animated.View
-      style={[
-        styles.card,
-        {
-          opacity,
-          transform: [{ translateX: x }, { translateY: y }, { rotate }, { scale }]
-        }
-      ]}
-    >
-      {showFace ? (
-        <>
-          <Text style={[styles.cardCorner, face.suit === "♥" || face.suit === "♦" ? styles.redSuit : styles.blackSuit]}>
-            {face.rank}
-          </Text>
-          <Text style={[styles.cardSuit, face.suit === "♥" || face.suit === "♦" ? styles.redSuit : styles.blackSuit]}>
-            {face.suit}
-          </Text>
-          {face.wild && <Text style={styles.wildBadge}>WILD</Text>}
-        </>
-      ) : (
-        <Text style={styles.cardBack}>◆</Text>
-      )}
-    </Animated.View>
-  );
+function points(card) {
+  if (card.wild) return 0;
+  if (card.rank === "J") return 10;
+  if (card.rank === "Q") return 11;
+  if (card.rank === "K") return 12;
+  if (card.rank === "A") return 13;
+  return Number(card.rank);
 }
 
-function Seat({ player, style }) {
+function PlayingCard({ card, selected, onPress }) {
   return (
-    <View style={[styles.seat, style]}>
-      <Text style={styles.seatEmoji}>{player.emoji}</Text>
-      <Text style={styles.seatName}>{player.name}</Text>
-    </View>
-  );
-}
+    <Pressable onPress={onPress}>
+      <View style={[styles.card, selected && styles.selectedCard]}>
+        <Text
+          style={[
+            styles.cardCorner,
+            card.suit === "♥" || card.suit === "♦" ? styles.redSuit : styles.blackSuit
+          ]}
+        >
+          {card.rank}
+        </Text>
 
-function GiftBubble({ visible }) {
-  if (!visible) return null;
+        <Text
+          style={[
+            styles.cardSuit,
+            card.suit === "♥" || card.suit === "♦" ? styles.redSuit : styles.blackSuit
+          ]}
+        >
+          {card.suit}
+        </Text>
 
-  return (
-    <View style={styles.giftBubble}>
-      <Text style={styles.giftText}>🍪 Grace brought cookies!</Text>
-    </View>
-  );
-}
-
-function TableTalk({ visible }) {
-  if (!visible) return null;
-
-  return (
-    <View style={styles.talkBubble}>
-      <Text style={styles.talkText}>Rico: “You sure about that?”</Text>
-    </View>
-  );
-}
-
-function GameTable() {
-  const [dealKey, setDealKey] = useState(0);
-  const [showFace, setShowFace] = useState(false);
-  const [giftVisible, setGiftVisible] = useState(false);
-  const [talkVisible, setTalkVisible] = useState(false);
-
-  function dealAgain() {
-    setShowFace(false);
-    setGiftVisible(false);
-    setTalkVisible(false);
-    setDealKey((value) => value + 1);
-
-    setTimeout(() => setShowFace(true), 1300);
-    setTimeout(() => setTalkVisible(true), 1700);
-    setTimeout(() => setGiftVisible(true), 2200);
-  }
-
-  React.useEffect(() => {
-    dealAgain();
-  }, []);
-
-  return (
-    <View style={styles.screen}>
-      <View style={styles.header}>
-        <Text style={styles.logo}>Wild Hands</Text>
-        <Text style={styles.tagline}>Friday Night at Grace’s</Text>
+        {card.wild && <Text style={styles.wildBadge}>WILD</Text>}
       </View>
-
-      <View style={styles.room}>
-        <Text style={styles.roomGlow}>🔥</Text>
-        <Text style={styles.cookieTray}>🍪</Text>
-        <Text style={styles.wineGlass}>🍷</Text>
-
-        <View style={styles.tableWrap}>
-          <View style={styles.table}>
-            <Seat player={PLAYERS[0]} style={styles.topSeat} />
-            <Seat player={PLAYERS[1]} style={styles.leftSeat} />
-            <Seat player={PLAYERS[2]} style={styles.rightSeat} />
-            <Seat player={PLAYERS[3]} style={styles.bottomSeat} />
-
-            <View style={styles.deck}>
-              <Text style={styles.deckText}>🂠</Text>
-            </View>
-
-            <View style={styles.wildMarker}>
-              <Text style={styles.wildMarkerText}>3s WILD</Text>
-            </View>
-
-            <View style={styles.cardLayer} key={dealKey}>
-              <FlyingCard delay={150} finalX={-82} finalY={148} rotate="-12deg" face={PLAYER_HAND[0]} showFace={showFace} />
-              <FlyingCard delay={450} finalX={0} finalY={162} rotate="0deg" face={PLAYER_HAND[1]} showFace={showFace} />
-              <FlyingCard delay={750} finalX={82} finalY={148} rotate="12deg" face={PLAYER_HAND[2]} showFace={showFace} />
-            </View>
-
-            <TableTalk visible={talkVisible} />
-            <GiftBubble visible={giftVisible} />
-          </View>
-        </View>
-      </View>
-
-      <Text style={styles.graceLine}>“I’ll deal ’em one at a time, honey.”</Text>
-
-      <View style={styles.controls}>
-        <Pressable style={styles.button} onPress={dealAgain}>
-          <Text style={styles.buttonText}>Deal Again</Text>
-        </Pressable>
-
-        <Pressable style={styles.secondaryButton} onPress={() => setShowFace(!showFace)}>
-          <Text style={styles.secondaryButtonText}>Flip Cards</Text>
-        </Pressable>
-      </View>
-    </View>
+    </Pressable>
   );
 }
 
 export default function App() {
-  return <GameTable />;
+  const [hand, setHand] = useState(START_HAND);
+  const [drawPile, setDrawPile] = useState(DRAW_PILE);
+  const [discardPile, setDiscardPile] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [message, setMessage] = useState("Grace deals one card at a time.");
+
+  const score = hand.reduce((total, card) => total + points(card), 0);
+
+  function drawCard() {
+    if (drawPile.length === 0) {
+      setMessage("The draw pile is empty, honey.");
+      return;
+    }
+
+    const [nextCard, ...remaining] = drawPile;
+
+    setHand([...hand, nextCard]);
+    setDrawPile(remaining);
+    setMessage(`You drew ${nextCard.rank}${nextCard.suit}${nextCard.wild ? " — wild!" : "."}`);
+  }
+
+  function discardSelected() {
+    if (!selectedId) {
+      setMessage("Pick a card to discard first.");
+      return;
+    }
+
+    const selectedCard = hand.find((card) => card.id === selectedId);
+
+    setHand(hand.filter((card) => card.id !== selectedId));
+    setDiscardPile([selectedCard, ...discardPile]);
+    setSelectedId(null);
+
+    if (selectedCard.wild) {
+      setMessage("...Honey. You just threw away a wild.");
+    } else {
+      setMessage(`You discarded ${selectedCard.rank}${selectedCard.suit}.`);
+    }
+  }
+
+  const topDiscard = discardPile[0];
+
+  return (
+    <View style={styles.screen}>
+      <Text style={styles.logo}>Wild Hands</Text>
+      <Text style={styles.tagline}>Friday Night at Grace’s</Text>
+
+      <View style={styles.table}>
+        <View style={styles.topRow}>
+          <Text style={styles.playerName}>🍷 Grace</Text>
+          <Text style={styles.playerName}>😈 Rico</Text>
+          <Text style={styles.playerName}>🕵️ Nikki</Text>
+        </View>
+
+        <View style={styles.centerRow}>
+          <View style={styles.deck}>
+            <Text style={styles.deckText}>🂠</Text>
+            <Text style={styles.deckLabel}>Draw</Text>
+          </View>
+
+          <View style={styles.wildMarker}>
+            <Text style={styles.wildMarkerText}>3s WILD</Text>
+          </View>
+
+          <View style={styles.discard}>
+            <Text style={styles.deckText}>
+              {topDiscard ? `${topDiscard.rank}${topDiscard.suit}` : "—"}
+            </Text>
+            <Text style={styles.deckLabel}>Discard</Text>
+          </View>
+        </View>
+
+        <Text style={styles.message}>“{message}”</Text>
+
+        <View style={styles.hand}>
+          {hand.map((card) => (
+            <PlayingCard
+              key={card.id}
+              card={card}
+              selected={selectedId === card.id}
+              onPress={() => setSelectedId(selectedId === card.id ? null : card.id)}
+            />
+          ))}
+        </View>
+
+        <Text style={styles.playerBottom}>🙂 You</Text>
+      </View>
+
+      <View style={styles.scorePanel}>
+        <Text style={styles.scoreText}>Current Score: {score}</Text>
+        <Text style={styles.scoreSub}>Lower is better</Text>
+      </View>
+
+      <View style={styles.controls}>
+        <Pressable style={styles.button} onPress={drawCard}>
+          <Text style={styles.buttonText}>Draw</Text>
+        </Pressable>
+
+        <Pressable style={styles.secondaryButton} onPress={discardSelected}>
+          <Text style={styles.secondaryButtonText}>Discard</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -186,173 +174,119 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cream,
     alignItems: "center",
     justifyContent: "center",
-    padding: 16
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: 10
+    padding: 14
   },
   logo: {
-    fontSize: 42,
+    fontSize: 38,
     fontWeight: "900",
     color: COLORS.cranberry
   },
   tagline: {
-    fontSize: 16,
+    fontSize: 15,
     color: COLORS.ink,
-    marginTop: 2
+    marginBottom: 12
   },
-  room: {
+  table: {
     width: "100%",
     maxWidth: 430,
     minHeight: 560,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 32,
-    backgroundColor: "#F7E0BD",
-    borderWidth: 4,
-    borderColor: COLORS.walnut,
-    overflow: "hidden"
-  },
-  roomGlow: {
-    position: "absolute",
-    top: 18,
-    left: 28,
-    fontSize: 42
-  },
-  cookieTray: {
-    position: "absolute",
-    top: 28,
-    right: 38,
-    fontSize: 34
-  },
-  wineGlass: {
-    position: "absolute",
-    bottom: 30,
-    right: 34,
-    fontSize: 36
-  },
-  tableWrap: {
-    shadowColor: "#000",
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 12 }
-  },
-  table: {
-    width: 360,
-    height: 480,
-    borderRadius: 190,
+    borderRadius: 34,
     backgroundColor: COLORS.walnut,
-    borderWidth: 12,
+    borderWidth: 10,
     borderColor: COLORS.walnutDark,
     alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden"
+    justifyContent: "space-between",
+    padding: 18
   },
-  table: {
-    width: 360,
-    height: 480,
-    borderRadius: 190,
-    backgroundColor: COLORS.walnut,
-    borderWidth: 12,
-    borderColor: COLORS.walnutDark,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden"
+  topRow: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-around"
   },
-  seat: {
-    position: "absolute",
-    alignItems: "center",
-    backgroundColor: "rgba(244,231,211,0.18)",
-    borderColor: COLORS.gold,
-    borderWidth: 1,
-    borderRadius: 16,
-    paddingVertical: 5,
-    paddingHorizontal: 10
-  },
-  topSeat: {
-    top: 18
-  },
-  bottomSeat: {
-    bottom: 18
-  },
-  leftSeat: {
-    left: 14,
-    top: 212
-  },
-  rightSeat: {
-    right: 14,
-    top: 212
-  },
-  seatEmoji: {
-    fontSize: 22
-  },
-  seatName: {
+  playerName: {
     color: COLORS.gold,
     fontWeight: "900",
-    fontSize: 14
+    fontSize: 15
+  },
+  centerRow: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center"
   },
   deck: {
-    position: "absolute",
-    top: 152,
-    width: 60,
-    height: 84,
-    borderRadius: 10,
+    width: 72,
+    height: 96,
     backgroundColor: COLORS.card,
+    borderRadius: 12,
     borderWidth: 3,
     borderColor: COLORS.cranberry,
     alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.32,
-    shadowRadius: 9
+    justifyContent: "center"
+  },
+  discard: {
+    width: 72,
+    height: 96,
+    backgroundColor: "#F7E0BD",
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: COLORS.gold,
+    alignItems: "center",
+    justifyContent: "center"
   },
   deckText: {
-    fontSize: 38
+    fontSize: 32,
+    fontWeight: "900",
+    color: COLORS.cranberry
+  },
+  deckLabel: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: COLORS.ink
   },
   wildMarker: {
-    position: "absolute",
-    top: 252,
     backgroundColor: COLORS.cranberryDark,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 18,
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 2,
     borderColor: COLORS.gold
   },
   wildMarkerText: {
     color: COLORS.gold,
-    fontSize: 18,
-    fontWeight: "900"
+    fontWeight: "900",
+    fontSize: 16
   },
-  cardLayer: {
-    position: "absolute",
-    top: 218,
-    left: 180,
-    width: 0,
-    height: 0
+  message: {
+    color: COLORS.cream,
+    fontSize: 17,
+    fontStyle: "italic",
+    textAlign: "center",
+    minHeight: 44
+  },
+  hand: {
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "center",
+    flexWrap: "wrap"
   },
   card: {
-    position: "absolute",
     width: 66,
     height: 94,
-    marginLeft: -33,
-    marginTop: -47,
     borderRadius: 11,
     backgroundColor: COLORS.card,
     borderWidth: 3,
     borderColor: COLORS.cranberry,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 5 }
+    marginBottom: 6
   },
-  cardBack: {
-    color: COLORS.cranberry,
-    fontSize: 34,
-    fontWeight: "900"
+  selectedCard: {
+    transform: [{ translateY: -18 }],
+    borderColor: COLORS.gold,
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 10
   },
   cardCorner: {
     position: "absolute",
@@ -382,52 +316,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     paddingVertical: 2
   },
-  talkBubble: {
-    position: "absolute",
-    left: 54,
-    top: 112,
-    backgroundColor: COLORS.card,
-    borderRadius: 14,
-    padding: 9,
-    borderWidth: 2,
-    borderColor: COLORS.cranberry,
-    maxWidth: 180
+  playerBottom: {
+    color: COLORS.gold,
+    fontSize: 22,
+    fontWeight: "900"
   },
-  talkText: {
-    color: COLORS.ink,
-    fontSize: 13,
-    fontWeight: "800"
+  scorePanel: {
+    marginTop: 12,
+    alignItems: "center"
   },
-  giftBubble: {
-    position: "absolute",
-    right: 40,
-    bottom: 102,
-    backgroundColor: "#FFF8EC",
-    borderRadius: 14,
-    padding: 9,
-    borderWidth: 2,
-    borderColor: COLORS.gold
-  },
-  giftText: {
-    color: COLORS.ink,
-    fontWeight: "800"
-  },
-  graceLine: {
-    fontSize: 17,
-    fontStyle: "italic",
+  scoreText: {
     color: COLORS.cranberry,
-    textAlign: "center",
-    marginVertical: 14
+    fontSize: 20,
+    fontWeight: "900"
+  },
+  scoreSub: {
+    color: COLORS.ink,
+    fontSize: 13
   },
   controls: {
     flexDirection: "row",
-    gap: 10
+    gap: 10,
+    marginTop: 12
   },
   button: {
     backgroundColor: COLORS.cranberry,
     borderRadius: 18,
     paddingVertical: 14,
-    paddingHorizontal: 26
+    paddingHorizontal: 34
   },
   buttonText: {
     color: "white",
@@ -439,7 +355,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 18,
     paddingVertical: 14,
-    paddingHorizontal: 22
+    paddingHorizontal: 28
   },
   secondaryButtonText: {
     color: COLORS.cranberry,
