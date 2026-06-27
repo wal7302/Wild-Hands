@@ -335,7 +335,7 @@ func go_out():
 
 	round_active = false
 
-	var round_points := calculate_hand_points()
+	var round_points: int = calculate_hand_points()
 	player_score += round_points
 	grace_score += 12
 
