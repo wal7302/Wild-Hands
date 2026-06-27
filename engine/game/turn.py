@@ -4,21 +4,27 @@ class Turn:
 
         self.player = player
         self.round_state = round_state
-        self.drawn_card = None
-        self.discarded_card = None
 
     def draw(self):
 
-        self.drawn_card = self.round_state.draw_from_deck()
+        if not self.round_state.turn_state.can_draw():
+            return None
 
-        if self.drawn_card:
-            self.player.draw(self.drawn_card)
+        card = self.round_state.draw_from_deck()
 
-        return self.drawn_card
+        if card:
+            self.player.draw(card)
+            self.round_state.turn_state.mark_drawn(card)
+
+        return card
 
     def discard(self, index):
 
-        self.discarded_card = self.player.discard(index)
-        self.round_state.add_discard(self.discarded_card)
+        if not self.round_state.turn_state.can_discard():
+            return None
 
-        return self.discarded_card
+        card = self.player.discard(index)
+        self.round_state.add_discard(card)
+        self.round_state.turn_state.mark_discarded(card)
+
+        return card
