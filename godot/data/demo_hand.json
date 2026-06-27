@@ -1,0 +1,19 @@
+{
+    "player_hand": [
+        {
+            "rank": "3",
+            "suit": "♥",
+            "wild": true
+        },
+        {
+            "rank": "7",
+            "suit": "♣",
+            "wild": false
+        },
+        {
+            "rank": "K",
+            "suit": "♦",
+            "wild": false
+        }
+    ]
+}
