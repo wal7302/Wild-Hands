@@ -1,30 +1,60 @@
 extends Node
 
-const HAND_FILE = "res://data/demo_hand.json"
+const HAND_FILE := "res://data/demo_hand.json"
 
-func load_hand():
+var game_state := {}
+var draw_pile := []
 
-	var file = FileAccess.open(HAND_FILE, FileAccess.READ)
+func _ready():
+	load_game_state()
+
+func load_game_state():
+	var file := FileAccess.open(HAND_FILE, FileAccess.READ)
 
 	if file == null:
-		return []
+		game_state = {}
+		draw_pile = []
+		return
 
-	var text = file.get_as_text()
-
+	var text := file.get_as_text()
 	file.close()
 
-	var json = JSON.new()
+	var json := JSON.new()
+	var parse_result := json.parse(text)
 
-	if json.parse(text) != OK:
-		return []
+	if parse_result != OK:
+		game_state = {}
+		draw_pile = []
+		return
 
-	return json.data["player_hand"]
+	game_state = json.data
+	draw_pile = game_state.get("draw_pile", []).duplicate(true)
+
+func get_round_number():
+	return game_state.get("round_number", 1)
+
+func get_hand_size():
+	return game_state.get("hand_size", 3)
+
+func get_wild_rank():
+	return game_state.get("wild_rank", "3")
+
+func get_scores():
+	return game_state.get("scores", {"You": 0, "Grace": 0})
+
+func get_player_hand():
+	return game_state.get("player_hand", [])
 
 func draw_card():
-
-	var cards = load_hand()
-
-	if cards.is_empty():
+	if draw_pile.is_empty():
 		return null
 
-	return cards.pop_front()
+	return draw_pile.pop_front()
+
+func get_grace_discard():
+	return game_state.get("grace_discard", {
+		"id": "9C",
+		"rank": "9",
+		"suit": "♣",
+		"wild": false
+	})
