@@ -1,21 +1,30 @@
 extends Node
 
-#
-# Temporary bridge.
-# Later this will communicate with the Python engine.
-#
+const HAND_FILE = "res://data/demo_hand.json"
 
-var demo_deck = [
-	{"rank":"3","suit":"♥","wild":true},
-	{"rank":"7","suit":"♣","wild":false},
-	{"rank":"K","suit":"♦","wild":false},
-	{"rank":"5","suit":"♠","wild":false},
-	{"rank":"9","suit":"♥","wild":false},
-	{"rank":"Q","suit":"♣","wild":false}
-]
+func load_hand():
+
+	var file = FileAccess.open(HAND_FILE, FileAccess.READ)
+
+	if file == null:
+		return []
+
+	var text = file.get_as_text()
+
+	file.close()
+
+	var json = JSON.new()
+
+	if json.parse(text) != OK:
+		return []
+
+	return json.data["player_hand"]
 
 func draw_card():
-	if demo_deck.is_empty():
+
+	var cards = load_hand()
+
+	if cards.is_empty():
 		return null
 
-	return demo_deck.pop_front()
+	return cards.pop_front()
