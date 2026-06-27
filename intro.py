@@ -1,14 +1,7 @@
-import time
+from engine.experience.grace_house_scene_builder import GraceHouseSceneBuilder
+from engine.console.scene_renderer import SceneRenderer
 
-from engine.experience.grace_house_intro import GraceHouseIntro
 
+scene = GraceHouseSceneBuilder.build_arrival_scene()
 
-scene = GraceHouseIntro.build()
-
-print()
-
-for event in scene.events:
-
-    print(event.text)
-
-    time.sleep(0.6)
+SceneRenderer.render(scene)
