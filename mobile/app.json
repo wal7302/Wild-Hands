@@ -42,22 +42,42 @@ export default function App() {
   const [screen, setScreen] = useState("home");
 
   if (screen === "porch") {
-    return <PorchScreen styles={styles} onContinue={() => setScreen("door")} />;
+    return (
+      <PorchScreen
+        styles={styles}
+        onContinue={() => setScreen("door")}
+      />
+    );
   }
 
   if (screen === "door") {
-    return <DoorScreen styles={styles} onContinue={() => setScreen("living")} />;
+    return (
+      <DoorScreen
+        styles={styles}
+        onContinue={() => setScreen("living")}
+      />
+    );
   }
 
   if (screen === "living") {
-    return <LivingRoomScreen styles={styles} onContinue={() => setScreen("table")} />;
+    return (
+      <LivingRoomScreen
+        styles={styles}
+        onContinue={() => setScreen("table")}
+      />
+    );
   }
 
   if (screen === "table") {
     return <TableScreen onBack={() => setScreen("home")} />;
   }
 
-  return <HomeScreen styles={styles} onEnter={() => setScreen("porch")} />;
+  return (
+    <HomeScreen
+      styles={styles}
+      onEnter={() => setScreen("porch")}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
