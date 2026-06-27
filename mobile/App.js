@@ -76,6 +76,7 @@ export default function App() {
   const [discardDrawCardId, setDiscardDrawCardId] = useState(null);
   const [round, setRound] = useState(1);
   const [message, setMessage] = useState("Your turn. Draw from deck or take discard.");
+  const [handsRevealed, setHandsRevealed] = useState(false);
 
   function drawFromDeck() {
     if (currentTurn !== "player") return setMessage("Wait your turn.");
@@ -113,13 +114,29 @@ export default function App() {
       return;
     }
   
+    if (!selectedCard) {
+      setMessage("Select the card you are discarding to go out.");
+      return;
+    }
+  
     if (!canGoOut(playerHand)) {
       setMessage("You need 3 of a kind or a same-suit straight to go out.");
       return;
     }
   
-    setMessage("You went out! Round complete.");
+    const revealedHand = playerHand.filter(
+      (card) => card.id !== selectedCard.id
+    );
+  
+    setPlayerHand(revealedHand);
+    setDiscardPile([...discardPile, selectedCard]);
+    setSelectedCard(null);
+    setHasDrawn(false);
+    setDiscardDrawCardId(null);
+    setHandsRevealed(true);
     setCurrentTurn("roundOver");
+  
+    setMessage("You went out! Your remaining cards are revealed.");
   }
   
   function discardCard() {
@@ -179,6 +196,7 @@ export default function App() {
     setHasDrawn(false);
     setDiscardDrawCardId(null);
     setRound(1);
+    setHandsRevealed(false);
     setMessage("Your turn. Draw from deck or take discard.");
   }
 
@@ -206,7 +224,17 @@ export default function App() {
 
       <View style={styles.table}>
         <Text style={styles.playerName}>Grace</Text>
-        <Text style={styles.graceInfo}>Cards: {graceHand.length}</Text>
+        {handsRevealed ? (
+          <View style={styles.revealedHand}>
+            {graceHand.map((card) => (
+              <Text key={card.id} style={styles.revealedCard}>
+                {card.rank}{card.suit}
+              </Text>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.graceInfo}>Cards: {graceHand.length}</Text>
+        )}
 
         <View style={styles.centerRow}>
           <View style={styles.deck}>
@@ -405,5 +433,20 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: "#2E1B12",
     fontSize: 16,
+  },
+  revealedHand: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+  },
+  revealedCard: {
+    backgroundColor: "#FFF8EE",
+    color: "#2E1B12",
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    fontWeight: "bold",
   },
 });
