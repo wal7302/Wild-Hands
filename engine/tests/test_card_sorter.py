@@ -18,4 +18,15 @@ suit_sorted = CardSorter.by_suit(cards)
 
 assert len(suit_sorted) == 3
 
+meld_cards = [
+    Card(4, Suit.HEARTS),
+    Card(5, Suit.HEARTS),
+    Card(6, Suit.HEARTS),
+    Card(13, Suit.SPADES),
+]
+
+meld_sorted = CardSorter.by_meld_score(meld_cards)
+
+assert len(meld_sorted) == 4
+
 print("Card sorter test passed.")
