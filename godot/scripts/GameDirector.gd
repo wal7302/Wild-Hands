@@ -209,10 +209,9 @@ func deal_cards_from_engine():
 			card,
 			deck_position,
 			player_hand.global_position,
-			0.45
+			0.45,
+			i * 0.18
 		)
-
-		tween.set_delay(i * 0.18)
 		tween.tween_callback(func():
 			audio.play_card_deal()
 			card.get_parent().remove_child(card)
