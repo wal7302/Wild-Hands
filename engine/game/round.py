@@ -1,5 +1,6 @@
 from engine.models.deck import Deck
 from engine.game.turn import Turn
+from engine.game.turn_state import TurnState
 from engine.game.events import EventLog, GameEventType
 from engine.social.table_talk import TableTalkLibrary
 from engine.table.deal_sequence import DealSequence
@@ -21,6 +22,7 @@ class Round:
         self.finished = False
         self.events = EventLog()
         self.deal_sequence = DealSequence()
+        self.turn_state = TurnState()
 
         self.events.add(
             GameEventType.ROUND_STARTED,
@@ -125,3 +127,5 @@ class Round:
 
         if self.current_player_index >= len(self.players):
             self.current_player_index = 0
+
+        self.turn_state = TurnState()
