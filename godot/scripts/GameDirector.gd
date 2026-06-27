@@ -7,6 +7,7 @@ const GameAudio = preload("res://scripts/GameAudio.gd")
 const GraceReaction = preload("res://scripts/GraceReaction.gd")
 const EngineBridge = preload("res://scripts/EngineBridge.gd")
 const HandVisual = preload("res://scripts/HandVisual.gd")
+const TableAnimationDirector = preload("res://scripts/TableAnimationDirector.gd")
 
 var cranberry := Color("#7A1E2C")
 var cream := Color("#F4E7D3")
@@ -25,6 +26,7 @@ var score_label: Label
 var audio: GameAudio
 var grace_reaction: GraceReaction
 var user_hand: HandVisual
+var animation_director: TableAnimationDirector
 
 var current_turn := "player"
 var player_has_drawn := false
@@ -37,6 +39,9 @@ func _ready():
 
 	audio = GameAudio.new()
 	add_child(audio)
+
+	animation_director = TableAnimationDirector.new()
+	add_child(animation_director)
 
 	draw_background()
 	draw_title()
@@ -200,13 +205,19 @@ func deal_cards_from_engine():
 		card.position = deck_position
 		add_child(card)
 
-		var tween := create_tween()
-		tween.tween_property(card, "position", player_hand.global_position, 0.45).set_delay(i * 0.18)
+		var tween := animation_director.animate_card_from_deck(
+			card,
+			deck_position,
+			player_hand.global_position,
+			0.45
+		)
+
+		tween.set_delay(i * 0.18)
 		tween.tween_callback(func():
 			audio.play_card_deal()
 			card.get_parent().remove_child(card)
 			player_hand.add_card(card)
-		).set_delay(i * 0.18 + 0.45)
+		)
 
 func create_card_from_data(card_data):
 	var card = CardVisual.new()
@@ -238,17 +249,29 @@ func draw_card():
 	action_locked = true
 	message_label.text = "You reach for the deck."
 
-	user_hand.show_hand(player_hand.global_position)
-	var reach_tween = user_hand.move_to(deck_position, 0.3)
+	var reach_tween = animation_director.animate_hand_reach(
+		user_hand,
+		player_hand.global_position,
+		deck_position,
+		0.3
+	)
 
 	reach_tween.tween_callback(func():
 		var card = create_card_from_data(card_data)
-		card.position = deck_position
 		add_child(card)
 
-		var card_tween := create_tween()
-		card_tween.tween_property(card, "position", player_hand.global_position, 0.35)
-		user_hand.move_to(player_hand.global_position, 0.35)
+		var card_tween = animation_director.animate_card_from_deck(
+			card,
+			deck_position,
+			player_hand.global_position,
+			0.35
+		)
+
+		animation_director.animate_hand_return(
+			user_hand,
+			player_hand.global_position,
+			0.35
+		)
 
 		card_tween.tween_callback(func():
 			audio.play_card_deal()
@@ -285,11 +308,14 @@ func discard_selected_card():
 	action_locked = true
 
 	var card = player_hand.selected_card
-
 	message_label.text = "You reach for your card."
-	user_hand.show_hand(player_hand.global_position)
 
-	var reach_tween = user_hand.move_to(card.global_position, 0.25)
+	var reach_tween = animation_director.animate_hand_reach(
+		user_hand,
+		player_hand.global_position,
+		card.global_position,
+		0.25
+	)
 
 	reach_tween.tween_callback(func():
 		player_hand.remove_card(card)
@@ -297,11 +323,19 @@ func discard_selected_card():
 		add_child(card)
 		card.global_position = user_hand.global_position
 
-		var move_tween := create_tween()
-		move_tween.tween_property(user_hand, "global_position", discard_pile.global_position, 0.35)
-		move_tween.parallel().tween_property(card, "global_position", discard_pile.global_position, 0.35)
+		var hand_move = animation_director.animate_hand_return(
+			user_hand,
+			discard_pile.global_position,
+			0.35
+		)
 
-		move_tween.tween_callback(func():
+		var card_move = animation_director.animate_card_to_discard(
+			card,
+			discard_pile.global_position,
+			0.35
+		)
+
+		card_move.tween_callback(func():
 			card.get_parent().remove_child(card)
 			discard_pile.place_card(card)
 			user_hand.hide_hand()
@@ -332,8 +366,13 @@ func grace_take_turn():
 	grace_card.set_card_back()
 	add_child(grace_card)
 
-	var draw_tween := create_tween()
-	draw_tween.tween_property(grace_card, "position", grace_card_position, 0.35)
+	var draw_tween = animation_director.animate_card_from_deck(
+		grace_card,
+		deck_position,
+		grace_card_position,
+		0.35
+	)
+
 	draw_tween.tween_callback(func():
 		audio.play_card_deal()
 		message_label.text = "Grace draws."
@@ -348,8 +387,12 @@ func grace_take_turn():
 
 	grace_card.queue_free()
 
-	var discard_tween := create_tween()
-	discard_tween.tween_property(discard_card, "global_position", discard_pile.global_position, 0.35)
+	var discard_tween = animation_director.animate_card_to_discard(
+		discard_card,
+		discard_pile.global_position,
+		0.35
+	)
+
 	discard_tween.tween_callback(func():
 		audio.play_card_discard()
 		discard_card.get_parent().remove_child(discard_card)
