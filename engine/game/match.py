@@ -6,13 +6,15 @@ class Match:
 
         self.rounds = []
 
-    def add_round(self, round_number, scores):
+    def add_round(self, round_number, scores, events=None):
 
         self.rounds.append({
 
             "round": round_number,
 
-            "scores": scores
+            "scores": scores,
+
+            "events": events or [],
 
         })
 
