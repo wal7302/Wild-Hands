@@ -22,9 +22,13 @@ function buildDeck() {
 }
 
 export default function App() {
-  const [deck, setDeck] = useState(buildDeck());
-  const [playerHand, setPlayerHand] = useState([]);
-  const [graceHand, setGraceHand] = useState([]);
+  const startingDeck = buildDeck();
+  const playerStartingHand = startingDeck.splice(-3);
+  const graceStartingHand = startingDeck.splice(-3);
+
+  const [deck, setDeck] = useState(startingDeck);
+  const [playerHand, setPlayerHand] = useState(playerStartingHand);
+  const [graceHand, setGraceHand] = useState(graceStartingHand);
   const [discardPile, setDiscardPile] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const [currentTurn, setCurrentTurn] = useState("player");
@@ -230,7 +234,7 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    minHeight: "100vh",
     backgroundColor: "#F4E7D3",
     alignItems: "center",
     paddingTop: 45,
@@ -304,9 +308,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     minHeight: 50,
   },
-  hand: {
+   hand: {
+    height: 120,
     maxHeight: 120,
     marginTop: 10,
+    flexGrow: 0,
   },
   card: {
     width: 70,
