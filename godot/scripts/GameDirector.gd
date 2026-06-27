@@ -12,6 +12,8 @@ var walnut := Color("#6B3F24")
 var gold := Color("#D8A441")
 
 var deck_position := Vector2(165, 350)
+var grace_card_position := Vector2(165, 270)
+
 var player_hand: PlayerHand
 var discard_pile: DiscardPile
 var message_label: Label
@@ -19,9 +21,15 @@ var audio: GameAudio
 var grace_reaction: GraceReaction
 
 var current_turn := "player"
-var round_number := 1
-var max_rounds := 3
-var player_discards_this_round := 0
+var player_has_drawn := false
+var draw_index := 0
+
+var draw_cards = [
+	{"rank": "8", "suit": "♥", "wild": false},
+	{"rank": "3", "suit": "♠", "wild": true},
+	{"rank": "Q", "suit": "♣", "wild": false},
+	{"rank": "5", "suit": "♦", "wild": false}
+]
 
 func _ready():
 	audio = GameAudio.new()
@@ -71,12 +79,12 @@ func draw_table():
 	])
 	add_child(table)
 
-	var label := Label.new()
-	label.text = "Grace"
-	label.position = Vector2(165, 230)
-	label.add_theme_font_size_override("font_size", 24)
-	label.add_theme_color_override("font_color", gold)
-	add_child(label)
+	var grace := Label.new()
+	grace.text = "Grace"
+	grace.position = Vector2(165, 230)
+	grace.add_theme_font_size_override("font_size", 24)
+	grace.add_theme_color_override("font_color", gold)
+	add_child(grace)
 
 	var you := Label.new()
 	you.text = "You"
@@ -123,9 +131,16 @@ func create_grace_reaction():
 	add_child(grace_reaction)
 
 func create_buttons():
+	var draw_button := Button.new()
+	draw_button.text = "Draw"
+	draw_button.position = Vector2(80, 725)
+	draw_button.size = Vector2(90, 46)
+	draw_button.pressed.connect(draw_card)
+	add_child(draw_button)
+
 	var discard_button := Button.new()
 	discard_button.text = "Discard"
-	discard_button.position = Vector2(145, 725)
+	discard_button.position = Vector2(205, 725)
 	discard_button.size = Vector2(110, 46)
 	discard_button.pressed.connect(discard_selected_card)
 	add_child(discard_button)
@@ -151,9 +166,44 @@ func deal_cards():
 			player_hand.add_card(card)
 		).set_delay(i * 0.25 + 0.45)
 
+func draw_card():
+	if current_turn != "player":
+		message_label.text = "Wait your turn."
+		return
+
+	if player_has_drawn:
+		message_label.text = "Discard before drawing again."
+		return
+
+	var card_data = draw_cards[draw_index % draw_cards.size()]
+	draw_index += 1
+
+	var card = CardVisual.new()
+	card.position = deck_position
+	card.set_card_face(card_data["rank"], card_data["suit"], card_data["wild"])
+	add_child(card)
+
+	var tween := create_tween()
+	tween.tween_property(card, "position", player_hand.global_position, 0.35)
+	tween.tween_callback(func():
+		audio.play_card_deal()
+		card.get_parent().remove_child(card)
+		player_hand.add_card(card)
+		player_has_drawn = true
+
+		if card.is_wild:
+			message_label.text = "You drew a wild."
+		else:
+			message_label.text = "You drew a card."
+	)
+
 func discard_selected_card():
 	if current_turn != "player":
 		message_label.text = "Wait your turn."
+		return
+
+	if not player_has_drawn:
+		message_label.text = "Draw first, honey."
 		return
 
 	if player_hand.selected_card == null:
@@ -177,22 +227,48 @@ func discard_selected_card():
 
 		if card.is_wild:
 			audio.play_wild_discard()
-			message_label.text = "...Honey. You discarded a wild."
+			message_label.text = "...Honey. You discarded a wild. Grace is thinking..."
 			grace_reaction.say("...Honey.")
 		else:
 			audio.play_card_discard()
-			message_label.text = "Card discarded."
+			message_label.text = "Card discarded. Grace is thinking."
 
-		player_discards_this_round += 1
 		current_turn = "grace"
-		message_label.text += " Grace is thinking..."
+		player_has_drawn = false
 		grace_take_turn()
 	)
 
 func grace_take_turn():
 	await get_tree().create_timer(1.0).timeout
 
-	message_label.text = "Grace discards."
-	grace_reaction.say("Your move.")
+	var grace_card = CardVisual.new()
+	grace_card.position = deck_position
+	grace_card.set_card_back()
+	add_child(grace_card)
 
-	current_turn = "player"
+	var tween := create_tween()
+	tween.tween_property(grace_card, "position", grace_card_position, 0.35)
+	tween.tween_callback(func():
+		audio.play_card_deal()
+		message_label.text = "Grace draws."
+	)
+
+	await get_tree().create_timer(0.8).timeout
+
+	var discard_card = CardVisual.new()
+	discard_card.position = grace_card_position
+	discard_card.set_card_face("9", "♣", false)
+	add_child(discard_card)
+
+	grace_card.queue_free()
+
+	var discard_tween := create_tween()
+	discard_tween.tween_property(discard_card, "global_position", discard_pile.global_position, 0.35)
+	discard_tween.tween_callback(func():
+		audio.play_card_discard()
+		discard_card.get_parent().remove_child(discard_card)
+		discard_pile.place_card(discard_card)
+		message_label.text = "Grace discarded. Your move."
+		grace_reaction.say("Your move.")
+		current_turn = "player"
+	)
