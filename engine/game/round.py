@@ -2,15 +2,17 @@ from engine.models.deck import Deck
 from engine.game.turn import Turn
 from engine.game.events import EventLog, GameEventType
 from engine.social.table_talk import TableTalkLibrary
+from engine.table.deal_sequence import DealSequence
 
 
 class Round:
 
-    def __init__(self, players, cards_dealt):
+    def __init__(self, players, cards_dealt, dealer_name="Grace Lott"):
 
         self.players = players
         self.cards_dealt = cards_dealt
         self.wild_rank = cards_dealt
+        self.dealer_name = dealer_name
         self.deck = Deck()
         self.deck.set_wild_rank(cards_dealt)
         self.discard_pile = []
@@ -18,6 +20,7 @@ class Round:
         self.turn_count = 0
         self.finished = False
         self.events = EventLog()
+        self.deal_sequence = DealSequence()
 
         self.events.add(
             GameEventType.ROUND_STARTED,
@@ -29,6 +32,8 @@ class Round:
         for player in self.players:
             player.hand.clear()
 
+        self.deal_sequence.shuffle(self.dealer_name)
+
         for _ in range(self.cards_dealt):
 
             for player in self.players:
@@ -37,6 +42,9 @@ class Round:
 
                 if card is not None:
                     player.draw(card)
+                    self.deal_sequence.card_dealt(player.name, card)
+
+        self.deal_sequence.wild_revealed(self.wild_rank)
 
     def draw_from_deck(self):
 
