@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Wild Hands",
+    "slug": "wild-hands",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": ["ios", "android", "web"]
+  }
+}
