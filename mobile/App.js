@@ -119,14 +119,19 @@ export default function App() {
       return;
     }
   
-    if (!canGoOut(playerHand)) {
-      setMessage("You need 3 of a kind or a same-suit straight to go out.");
+    if (selectedCard.id === discardDrawCardId) {
+      setMessage("You have to keep the card you picked up from discard.");
       return;
     }
   
     const revealedHand = playerHand.filter(
       (card) => card.id !== selectedCard.id
     );
+  
+    if (!canGoOut(revealedHand)) {
+      setMessage("You need 3 of a kind or a same-suit straight to go out.");
+      return;
+    }
   
     setPlayerHand(revealedHand);
     setDiscardPile([...discardPile, selectedCard]);
@@ -136,7 +141,7 @@ export default function App() {
     setHandsRevealed(true);
     setCurrentTurn("roundOver");
   
-    setMessage("You went out! Your remaining cards are revealed.");
+    setMessage("You went out! All hands are revealed.");
   }
   
   function discardCard() {
