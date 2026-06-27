@@ -6,6 +6,7 @@ const DiscardPile = preload("res://scripts/DiscardPile.gd")
 const GameAudio = preload("res://scripts/GameAudio.gd")
 const GraceReaction = preload("res://scripts/GraceReaction.gd")
 const EngineBridge = preload("res://scripts/EngineBridge.gd")
+const HandVisual = preload("res://scripts/HandVisual.gd")
 
 var cranberry := Color("#7A1E2C")
 var cream := Color("#F4E7D3")
@@ -23,10 +24,12 @@ var round_label: Label
 var score_label: Label
 var audio: GameAudio
 var grace_reaction: GraceReaction
+var user_hand: HandVisual
 
 var current_turn := "player"
 var player_has_drawn := false
 var round_active := true
+var action_locked := false
 
 func _ready():
 	engine = EngineBridge.new()
@@ -42,6 +45,7 @@ func _ready():
 	create_discard_pile()
 	create_player_hand()
 	create_grace_reaction()
+	create_user_hand()
 	create_buttons()
 	start_round()
 
@@ -136,6 +140,10 @@ func create_grace_reaction():
 	grace_reaction.position = Vector2(195, 185)
 	add_child(grace_reaction)
 
+func create_user_hand():
+	user_hand = HandVisual.new()
+	add_child(user_hand)
+
 func create_buttons():
 	var draw_button := Button.new()
 	draw_button.text = "Draw"
@@ -162,6 +170,7 @@ func start_round():
 	round_active = true
 	current_turn = "player"
 	player_has_drawn = false
+	action_locked = false
 
 	var scores = engine.get_scores()
 	var round_number = engine.get_round_number()
@@ -201,14 +210,13 @@ func deal_cards_from_engine():
 
 func create_card_from_data(card_data):
 	var card = CardVisual.new()
-	card.set_card_face(
-		card_data.get("rank", "?"),
-		card_data.get("suit", "?"),
-		card_data.get("wild", false)
-	)
+	card.configure(card_data)
 	return card
 
 func draw_card():
+	if action_locked:
+		return
+
 	if not round_active:
 		message_label.text = "Round is over."
 		return
@@ -227,21 +235,36 @@ func draw_card():
 		message_label.text = "Deck is empty."
 		return
 
-	var card = create_card_from_data(card_data)
-	card.position = deck_position
-	add_child(card)
+	action_locked = true
+	message_label.text = "You reach for the deck."
 
-	var tween := create_tween()
-	tween.tween_property(card, "position", player_hand.global_position, 0.35)
-	tween.tween_callback(func():
-		audio.play_card_deal()
-		card.get_parent().remove_child(card)
-		player_hand.add_card(card)
-		player_has_drawn = true
-		message_label.text = "You drew a wild." if card.is_wild else "You drew a card."
+	user_hand.show_hand(player_hand.global_position)
+	var reach_tween = user_hand.move_to(deck_position, 0.3)
+
+	reach_tween.tween_callback(func():
+		var card = create_card_from_data(card_data)
+		card.position = deck_position
+		add_child(card)
+
+		var card_tween := create_tween()
+		card_tween.tween_property(card, "position", player_hand.global_position, 0.35)
+		user_hand.move_to(player_hand.global_position, 0.35)
+
+		card_tween.tween_callback(func():
+			audio.play_card_deal()
+			card.get_parent().remove_child(card)
+			player_hand.add_card(card)
+			user_hand.hide_hand()
+			player_has_drawn = true
+			action_locked = false
+			message_label.text = "You drew a wild." if card.is_wild else "You drew a card."
+		)
 	)
 
 func discard_selected_card():
+	if action_locked:
+		return
+
 	if not round_active:
 		message_label.text = "Round is over."
 		return
@@ -259,29 +282,43 @@ func discard_selected_card():
 		grace_reaction.say("Pick a card first, honey.")
 		return
 
+	action_locked = true
+
 	var card = player_hand.selected_card
-	player_hand.remove_card(card)
-	card.get_parent().remove_child(card)
-	add_child(card)
-	card.global_position = player_hand.global_position
 
-	var tween := create_tween()
-	tween.tween_property(card, "global_position", discard_pile.global_position, 0.35)
-	tween.tween_callback(func():
+	message_label.text = "You reach for your card."
+	user_hand.show_hand(player_hand.global_position)
+
+	var reach_tween = user_hand.move_to(card.global_position, 0.25)
+
+	reach_tween.tween_callback(func():
+		player_hand.remove_card(card)
 		card.get_parent().remove_child(card)
-		discard_pile.place_card(card)
+		add_child(card)
+		card.global_position = user_hand.global_position
 
-		if card.is_wild:
-			audio.play_wild_discard()
-			message_label.text = "...Honey. You discarded a wild. Grace is thinking..."
-			grace_reaction.say("...Honey.")
-		else:
-			audio.play_card_discard()
-			message_label.text = "Card discarded. Grace is thinking."
+		var move_tween := create_tween()
+		move_tween.tween_property(user_hand, "global_position", discard_pile.global_position, 0.35)
+		move_tween.parallel().tween_property(card, "global_position", discard_pile.global_position, 0.35)
 
-		current_turn = "grace"
-		player_has_drawn = false
-		grace_take_turn()
+		move_tween.tween_callback(func():
+			card.get_parent().remove_child(card)
+			discard_pile.place_card(card)
+			user_hand.hide_hand()
+
+			if card.is_wild:
+				audio.play_wild_discard()
+				message_label.text = "...Honey. You discarded a wild. Grace is thinking..."
+				grace_reaction.say("...Honey.")
+			else:
+				audio.play_card_discard()
+				message_label.text = "Card discarded. Grace is thinking."
+
+			current_turn = "grace"
+			player_has_drawn = false
+			action_locked = false
+			grace_take_turn()
+		)
 	)
 
 func grace_take_turn():
@@ -323,6 +360,9 @@ func grace_take_turn():
 	)
 
 func go_out():
+	if action_locked:
+		return
+
 	if not round_active:
 		message_label.text = "Round already ended."
 		return
