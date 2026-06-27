@@ -60,7 +60,8 @@ class Game:
 
             scores[player.name] = score
 
-        self.match.add_round(
+            self.match.add_round(
+            self.current_round_index + 1,
             self.round_number,
             scores,
             events=self.round.events.events if self.round else [],
