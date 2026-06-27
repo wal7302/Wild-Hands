@@ -26,10 +26,6 @@ var grace_reaction: GraceReaction
 
 var current_turn := "player"
 var player_has_drawn := false
-var round_number := 1
-var hand_size := 3
-var player_score := 0
-var grace_score := 0
 var round_active := true
 
 func _ready():
@@ -166,12 +162,17 @@ func start_round():
 	round_active = true
 	current_turn = "player"
 	player_has_drawn = false
-	hand_size = round_number + 2
-	round_label.text = "Round %s • %ss wild" % [round_number, hand_size]
-	score_label.text = "You: %s   Grace: %s" % [player_score, grace_score]
+
+	var scores = engine.get_scores()
+	var round_number = engine.get_round_number()
+	var wild_rank = engine.get_wild_rank()
+
+	round_label.text = "Round %s • %ss wild" % [round_number, wild_rank]
+	score_label.text = "You: %s   Grace: %s" % [scores.get("You", 0), scores.get("Grace", 0)]
 	message_label.text = "Grace deals one card at a time."
+
 	clear_player_hand()
-	deal_cards()
+	deal_cards_from_engine()
 
 func clear_player_hand():
 	for card in player_hand.cards:
@@ -181,17 +182,13 @@ func clear_player_hand():
 	player_hand.selected_card = null
 	player_hand.arrange_cards()
 
-func deal_cards():
-	for i in range(hand_size):
-		var card_data = engine.draw_card()
+func deal_cards_from_engine():
+	var hand = engine.get_player_hand()
 
-		if card_data == null:
-			message_label.text = "Deck is empty."
-			return
-
-		var card = CardVisual.new()
+	for i in range(hand.size()):
+		var card_data = hand[i]
+		var card = create_card_from_data(card_data)
 		card.position = deck_position
-		card.set_card_face(card_data["rank"], card_data["suit"], card_data["wild"])
 		add_child(card)
 
 		var tween := create_tween()
@@ -202,9 +199,18 @@ func deal_cards():
 			player_hand.add_card(card)
 		).set_delay(i * 0.18 + 0.45)
 
+func create_card_from_data(card_data):
+	var card = CardVisual.new()
+	card.set_card_face(
+		card_data.get("rank", "?"),
+		card_data.get("suit", "?"),
+		card_data.get("wild", false)
+	)
+	return card
+
 func draw_card():
 	if not round_active:
-		message_label.text = "Start the next round, honey."
+		message_label.text = "Round is over."
 		return
 
 	if current_turn != "player":
@@ -221,9 +227,8 @@ func draw_card():
 		message_label.text = "Deck is empty."
 		return
 
-	var card = CardVisual.new()
+	var card = create_card_from_data(card_data)
 	card.position = deck_position
-	card.set_card_face(card_data["rank"], card_data["suit"], card_data["wild"])
 	add_child(card)
 
 	var tween := create_tween()
@@ -260,10 +265,8 @@ func discard_selected_card():
 	add_child(card)
 	card.global_position = player_hand.global_position
 
-	var target := discard_pile.global_position
-
 	var tween := create_tween()
-	tween.tween_property(card, "global_position", target, 0.35)
+	tween.tween_property(card, "global_position", discard_pile.global_position, 0.35)
 	tween.tween_callback(func():
 		card.get_parent().remove_child(card)
 		discard_pile.place_card(card)
@@ -292,18 +295,18 @@ func grace_take_turn():
 	grace_card.set_card_back()
 	add_child(grace_card)
 
-	var tween := create_tween()
-	tween.tween_property(grace_card, "position", grace_card_position, 0.35)
-	tween.tween_callback(func():
+	var draw_tween := create_tween()
+	draw_tween.tween_property(grace_card, "position", grace_card_position, 0.35)
+	draw_tween.tween_callback(func():
 		audio.play_card_deal()
 		message_label.text = "Grace draws."
 	)
 
 	await get_tree().create_timer(0.8).timeout
 
-	var discard_card = CardVisual.new()
+	var grace_discard_data = engine.get_grace_discard()
+	var discard_card = create_card_from_data(grace_discard_data)
 	discard_card.position = grace_card_position
-	discard_card.set_card_face("9", "♣", false)
 	add_child(discard_card)
 
 	grace_card.queue_free()
@@ -321,7 +324,7 @@ func grace_take_turn():
 
 func go_out():
 	if not round_active:
-		next_round()
+		message_label.text = "Round already ended."
 		return
 
 	if current_turn != "player":
@@ -329,27 +332,9 @@ func go_out():
 		return
 
 	round_active = false
-
 	var round_points: int = calculate_hand_points()
-	player_score += round_points
-	grace_score += 12
-
-	score_label.text = "You: %s   Grace: %s" % [player_score, grace_score]
 	message_label.text = "You went out! Round score: %s" % round_points
 	grace_reaction.say("Now that was a hand.")
-
-	await get_tree().create_timer(1.5).timeout
-	message_label.text = "Tap Go Out to start next round."
-
-func next_round():
-	if round_number >= 3:
-		var winner := "You" if player_score <= grace_score else "Grace"
-		message_label.text = "Match complete. Winner: %s" % winner
-		grace_reaction.say("Good game, honey.")
-		return
-
-	round_number += 1
-	start_round()
 
 func calculate_hand_points():
 	var total := 0
