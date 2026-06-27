@@ -152,7 +152,7 @@ func deal_cards():
 		).set_delay(i * 0.25 + 0.45)
 
 func discard_selected_card():
-    if current_turn != "player":
+	if current_turn != "player":
 		message_label.text = "Wait your turn."
 		return
 
@@ -187,6 +187,7 @@ func discard_selected_card():
 		current_turn = "grace"
 		message_label.text += " Grace is thinking..."
 		grace_take_turn()
+	)
 
 func grace_take_turn():
 	await get_tree().create_timer(1.0).timeout
@@ -195,5 +196,3 @@ func grace_take_turn():
 	grace_reaction.say("Your move.")
 
 	current_turn = "player"
-
-	)
