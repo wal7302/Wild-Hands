@@ -6,6 +6,7 @@ from engine.game.score import ScoreEngine
 from engine.game.hand_analyzer import HandAnalyzer
 from engine.persistence.game_serializer import GameSerializer
 from engine.persistence.save_game import SaveGame
+from engine.game.round_reveal import RoundReveal
 
 def show_hand(player):
     return " | ".join(
@@ -115,6 +116,19 @@ while True:
     else:
         for event in highlights:
             print(event.message)
+
+    print()
+    print("ROUND REVEAL")
+    print("----------------------------")
+
+    reveals = RoundReveal.reveal(players)
+
+    for reveal in reveals:
+        summary = reveal.summary()
+
+        print(f"{summary['player']}: {summary['score']} points")
+        print(f"  Melds: {summary['melds']}")
+        print(f"  Penalty Cards: {summary['penalty_cards']}")
 
     print()
     print("ROUND RESULTS")
