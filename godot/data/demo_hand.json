@@ -1,19 +1,61 @@
 {
-    "player_hand": [
-        {
-            "rank": "3",
-            "suit": "♥",
-            "wild": true
-        },
-        {
-            "rank": "7",
-            "suit": "♣",
-            "wild": false
-        },
-        {
-            "rank": "K",
-            "suit": "♦",
-            "wild": false
-        }
-    ]
+  "round_number": 1,
+  "hand_size": 3,
+  "wild_rank": "3",
+  "scores": {
+    "You": 0,
+    "Grace": 0
+  },
+  "player_hand": [
+    {
+      "id": "3H",
+      "rank": "3",
+      "suit": "♥",
+      "wild": true
+    },
+    {
+      "id": "7C",
+      "rank": "7",
+      "suit": "♣",
+      "wild": false
+    },
+    {
+      "id": "KD",
+      "rank": "K",
+      "suit": "♦",
+      "wild": false
+    }
+  ],
+  "draw_pile": [
+    {
+      "id": "8H",
+      "rank": "8",
+      "suit": "♥",
+      "wild": false
+    },
+    {
+      "id": "3S",
+      "rank": "3",
+      "suit": "♠",
+      "wild": true
+    },
+    {
+      "id": "QC",
+      "rank": "Q",
+      "suit": "♣",
+      "wild": false
+    },
+    {
+      "id": "5D",
+      "rank": "5",
+      "suit": "♦",
+      "wild": false
+    }
+  ],
+  "grace_discard": {
+    "id": "9C",
+    "rank": "9",
+    "suit": "♣",
+    "wild": false
+  }
 }
