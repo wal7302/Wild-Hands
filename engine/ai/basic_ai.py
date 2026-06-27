@@ -25,32 +25,31 @@ class BasicAI:
         if not scored_options:
             return 0
 
-        scored_options.sort(
-            key=lambda option: option["score"]
-        )
-
-        best_index = scored_options[0]["index"]
+        scored_options.sort(key=lambda option: option["score"])
 
         personality = getattr(player, "personality", None)
 
         if personality is None:
-            return best_index
+            return scored_options[0]["index"]
 
         risk = personality.discard_risk
 
-        if risk <= 0:
-            return best_index
-
+        # Low-risk players usually choose best discard.
         if random.random() > risk:
-            return best_index
+            return scored_options[0]["index"]
 
-        risk_pool_size = min(
+        # Higher-risk personalities may choose from weaker options.
+        pool_size = min(
             len(scored_options),
-            max(2, int(len(scored_options) * risk) + 1)
+            max(2, int(len(scored_options) * (risk + 0.25)))
         )
 
-        risky_choice = random.choice(
-            scored_options[:risk_pool_size]
-        )
+        risky_pool = scored_options[:pool_size]
 
-        return risky_choice["index"]
+        # Crazy/drunk personalities sometimes make truly bad choices.
+        if risk >= 0.55 and random.random() < risk:
+            risky_pool = scored_options
+
+        choice = random.choice(risky_pool)
+
+        return choice["index"]
