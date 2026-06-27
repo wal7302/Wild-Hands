@@ -24,6 +24,45 @@ function createInitialGame() {
   };
 }
 
+function rankValue(rank) {
+  const values = { A: 1, J: 11, Q: 12, K: 13 };
+  return values[rank] || Number(rank);
+}
+
+function canGoOut(hand) {
+  if (hand.length !== 3) return false;
+
+  const wilds = hand.filter((card) => card.wild);
+  const naturalCards = hand.filter((card) => !card.wild);
+
+  if (naturalCards.length === 0) return true;
+
+  const sameRank = naturalCards.every(
+    (card) => card.rank === naturalCards[0].rank
+  );
+
+  if (sameRank) return true;
+
+  const sameSuit = naturalCards.every(
+    (card) => card.suit === naturalCards[0].suit
+  );
+
+  if (!sameSuit) return false;
+
+  const values = naturalCards
+    .map((card) => rankValue(card.rank))
+    .sort((a, b) => a - b);
+
+  for (let start = 1; start <= 11; start++) {
+    const straight = [start, start + 1, start + 2];
+    if (values.every((value) => straight.includes(value))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export default function App() {
   const initial = createInitialGame();
 
@@ -68,6 +107,21 @@ export default function App() {
     setMessage("You picked up the discard. You must keep that card this turn.");
   }
 
+  function goOut() {
+    if (currentTurn !== "player") {
+      setMessage("Wait your turn.");
+      return;
+    }
+  
+    if (!canGoOut(playerHand)) {
+      setMessage("You need 3 of a kind or a same-suit straight to go out.");
+      return;
+    }
+  
+    setMessage("You went out! Round complete.");
+    setCurrentTurn("roundOver");
+  }
+  
   function discardCard() {
     if (currentTurn !== "player") return setMessage("Wait your turn.");
     if (!hasDrawn) return setMessage("Draw before you discard.");
@@ -181,6 +235,10 @@ export default function App() {
           <Text style={styles.buttonText}>Draw Deck</Text>
         </Pressable>
 
+        <Pressable style={styles.button} onPress={goOut}>
+          <Text style={styles.buttonText}>Go Out</Text>
+        </Pressable>
+        
         <Pressable style={styles.button} onPress={takeDiscard}>
           <Text style={styles.buttonText}>Take Discard</Text>
         </Pressable>
