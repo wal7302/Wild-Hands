@@ -1,5 +1,7 @@
 extends Node2D
 
+const CardVisual = preload("res://scripts/CardVisual.gd")
+
 var cranberry := Color("#7A1E2C")
 var cream := Color("#F4E7D3")
 var walnut := Color("#6B3F24")
@@ -61,7 +63,7 @@ func draw_table():
 	add_child(you)
 
 func draw_deck():
-	var deck := CardVisual.new()
+	var deck = CardVisual.new()
 	deck.position = Vector2(165, 350)
 	deck.set_card_back()
 	add_child(deck)
@@ -74,7 +76,7 @@ func deal_cards():
 	]
 
 	for i in range(3):
-		var card := CardVisual.new()
+		var card = CardVisual.new()
 		card.position = Vector2(165, 350)
 		card.set_card_face(["3", "7", "K"][i], ["♥", "♣", "♦"][i], i == 0)
 		add_child(card)
