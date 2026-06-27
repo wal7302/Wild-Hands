@@ -205,7 +205,7 @@ func deal_cards_from_engine():
 		card.position = deck_position
 		add_child(card)
 
-		var tween := animation_director.animate_card_from_deck(
+		var tween: Tween = animation_director.animate_card_from_deck(
 			card,
 			deck_position,
 			player_hand.global_position,
