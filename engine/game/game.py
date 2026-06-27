@@ -6,13 +6,20 @@ from engine.game.game_modes import GameMode, GameModeConfig
 
 class Game:
 
-    def __init__(self, players, mode=GameMode.QUICK, starting_round=3):
+    def __init__(
+        self,
+        players,
+        mode=GameMode.QUICK,
+        starting_round=3,
+        dealer_name="Grace Lott",
+    ):
 
         self.players = players
         self.mode = mode
         self.rounds_to_play = GameModeConfig.rounds_for(mode, starting_round)
         self.current_round_index = 0
         self.round_number = self.rounds_to_play[self.current_round_index]
+        self.dealer_name = dealer_name
         self.round = None
         self.match = Match(players)
 
@@ -20,7 +27,8 @@ class Game:
 
         self.round = Round(
             self.players,
-            self.round_number
+            self.round_number,
+            dealer_name=self.dealer_name,
         )
 
         self.round.deal()
