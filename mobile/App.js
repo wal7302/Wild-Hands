@@ -6,34 +6,53 @@ const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
 
 function buildDeck() {
   const deck = [];
+
   suits.forEach((suit) => {
     ranks.forEach((rank) => {
-      deck.push({ id: `${rank}${suit}`, rank, suit, wild: rank === "3" });
+      deck.push({ id: `${rank}${suit}`, rank, suit });
     });
   });
+
   return deck.sort(() => Math.random() - 0.5);
 }
 
-function createInitialGame() {
+function createInitialGame(round = 1) {
   const deck = buildDeck();
+  const wildCard = deck.pop();
+
   return {
     deck,
+    wildRank: wildCard.rank,
+    wildCard,
     playerHand: deck.splice(-3),
     graceHand: deck.splice(-3),
     discardPile: [],
+    round,
   };
 }
 
 function rankValue(rank) {
-  const values = { A: 1, J: 11, Q: 12, K: 13 };
+  const values = {
+    A: 1,
+    J: 11,
+    Q: 12,
+    K: 13,
+  };
+
   return values[rank] || Number(rank);
 }
 
-function canGoOut(hand) {
+function scoreValue(card, wildRank) {
+  if (card.rank === wildRank) return 0;
+  if (card.rank === "A") return 15;
+  if (["J", "Q", "K"].includes(card.rank)) return 10;
+  return Number(card.rank);
+}
+
+function canGoOut(hand, wildRank) {
   if (hand.length !== 3) return false;
 
-  const wilds = hand.filter((card) => card.wild);
-  const naturalCards = hand.filter((card) => !card.wild);
+  const naturalCards = hand.filter((card) => card.rank !== wildRank);
 
   if (naturalCards.length === 0) return true;
 
@@ -55,6 +74,7 @@ function canGoOut(hand) {
 
   for (let start = 1; start <= 11; start++) {
     const straight = [start, start + 1, start + 2];
+
     if (values.every((value) => straight.includes(value))) {
       return true;
     }
@@ -67,6 +87,8 @@ export default function App() {
   const initial = createInitialGame();
 
   const [deck, setDeck] = useState(initial.deck);
+  const [wildRank, setWildRank] = useState(initial.wildRank);
+  const [wildCard, setWildCard] = useState(initial.wildCard);
   const [playerHand, setPlayerHand] = useState(initial.playerHand);
   const [graceHand, setGraceHand] = useState(initial.graceHand);
   const [discardPile, setDiscardPile] = useState(initial.discardPile);
@@ -74,9 +96,11 @@ export default function App() {
   const [currentTurn, setCurrentTurn] = useState("player");
   const [hasDrawn, setHasDrawn] = useState(false);
   const [discardDrawCardId, setDiscardDrawCardId] = useState(null);
-  const [round, setRound] = useState(1);
-  const [message, setMessage] = useState("Your turn. Draw from deck or take discard.");
   const [handsRevealed, setHandsRevealed] = useState(false);
+  const [round, setRound] = useState(1);
+  const [playerScore, setPlayerScore] = useState(0);
+  const [graceScore, setGraceScore] = useState(0);
+  const [message, setMessage] = useState("Dealer revealed the wild. Your turn.");
 
   function drawFromDeck() {
     if (currentTurn !== "player") return setMessage("Wait your turn.");
@@ -90,7 +114,7 @@ export default function App() {
     setPlayerHand([...playerHand, card]);
     setHasDrawn(true);
     setDiscardDrawCardId(null);
-    setMessage("You drew from the deck. Now discard.");
+    setMessage("You drew from the deck. Now discard or go out.");
   }
 
   function takeDiscard() {
@@ -108,42 +132,6 @@ export default function App() {
     setMessage("You picked up the discard. You must keep that card this turn.");
   }
 
-  function goOut() {
-    if (currentTurn !== "player") {
-      setMessage("Wait your turn.");
-      return;
-    }
-  
-    if (!selectedCard) {
-      setMessage("Select the card you are discarding to go out.");
-      return;
-    }
-  
-    if (selectedCard.id === discardDrawCardId) {
-      setMessage("You have to keep the card you picked up from discard.");
-      return;
-    }
-  
-    const revealedHand = playerHand.filter(
-      (card) => card.id !== selectedCard.id
-    );
-  
-    if (!canGoOut(revealedHand)) {
-      setMessage("You need 3 of a kind or a same-suit straight to go out.");
-      return;
-    }
-  
-    setPlayerHand(revealedHand);
-    setDiscardPile([...discardPile, selectedCard]);
-    setSelectedCard(null);
-    setHasDrawn(false);
-    setDiscardDrawCardId(null);
-    setHandsRevealed(true);
-    setCurrentTurn("roundOver");
-  
-    setMessage("You went out! All hands are revealed.");
-  }
-  
   function discardCard() {
     if (currentTurn !== "player") return setMessage("Wait your turn.");
     if (!hasDrawn) return setMessage("Draw before you discard.");
@@ -162,9 +150,42 @@ export default function App() {
     setHasDrawn(false);
     setDiscardDrawCardId(null);
     setCurrentTurn("grace");
-    setMessage(selectedCard.wild ? "...Honey. You discarded a wild. Grace is thinking." : "Card discarded. Grace is thinking.");
+    setMessage("Card discarded. Grace is thinking.");
 
     setTimeout(() => graceTurn(deck, nextDiscardPile), 800);
+  }
+
+  function goOut() {
+    if (currentTurn !== "player") return setMessage("Wait your turn.");
+    if (!hasDrawn) return setMessage("Draw before you go out.");
+    if (!selectedCard) return setMessage("Select the card you are discarding to go out.");
+
+    if (selectedCard.id === discardDrawCardId) {
+      return setMessage("You have to keep the card you picked up from discard.");
+    }
+
+    const revealedHand = playerHand.filter((card) => card.id !== selectedCard.id);
+
+    if (!canGoOut(revealedHand, wildRank)) {
+      setMessage("You need 3 of a kind or a same-suit straight to go out.");
+      return;
+    }
+
+    const graceRoundScore = graceHand.reduce(
+      (total, card) => total + scoreValue(card, wildRank),
+      0
+    );
+
+    setPlayerHand(revealedHand);
+    setDiscardPile([...discardPile, selectedCard]);
+    setSelectedCard(null);
+    setHasDrawn(false);
+    setDiscardDrawCardId(null);
+    setHandsRevealed(true);
+    setGraceScore(graceScore + graceRoundScore);
+    setCurrentTurn("roundOver");
+
+    setMessage(`You went out! Grace scores ${graceRoundScore}.`);
   }
 
   function graceTurn(currentDeck, currentDiscardPile) {
@@ -182,7 +203,7 @@ export default function App() {
 
     if (discardedCard) {
       setDiscardPile([...currentDiscardPile, discardedCard]);
-      setMessage("Grace discards. Your turn. Draw from deck or take discard.");
+      setMessage("Grace discards. Your turn.");
     } else {
       setMessage("Grace passes. Your turn.");
     }
@@ -190,9 +211,17 @@ export default function App() {
     setCurrentTurn("player");
   }
 
-  function restartGame() {
-    const fresh = createInitialGame();
+  function nextRound() {
+    if (round >= 3) {
+      setMessage("Game complete.");
+      return;
+    }
+
+    const fresh = createInitialGame(round + 1);
+
     setDeck(fresh.deck);
+    setWildRank(fresh.wildRank);
+    setWildCard(fresh.wildCard);
     setPlayerHand(fresh.playerHand);
     setGraceHand(fresh.graceHand);
     setDiscardPile([]);
@@ -200,13 +229,34 @@ export default function App() {
     setCurrentTurn("player");
     setHasDrawn(false);
     setDiscardDrawCardId(null);
-    setRound(1);
     setHandsRevealed(false);
-    setMessage("Your turn. Draw from deck or take discard.");
+    setRound(round + 1);
+    setMessage("Dealer revealed the wild. Your turn.");
+  }
+
+  function restartGame() {
+    const fresh = createInitialGame(1);
+
+    setDeck(fresh.deck);
+    setWildRank(fresh.wildRank);
+    setWildCard(fresh.wildCard);
+    setPlayerHand(fresh.playerHand);
+    setGraceHand(fresh.graceHand);
+    setDiscardPile([]);
+    setSelectedCard(null);
+    setCurrentTurn("player");
+    setHasDrawn(false);
+    setDiscardDrawCardId(null);
+    setHandsRevealed(false);
+    setRound(1);
+    setPlayerScore(0);
+    setGraceScore(0);
+    setMessage("Dealer revealed the wild. Your turn.");
   }
 
   function renderCard(card) {
     const selected = selectedCard?.id === card.id;
+    const isWild = card.rank === wildRank;
 
     return (
       <Pressable
@@ -214,8 +264,11 @@ export default function App() {
         onPress={() => setSelectedCard(card)}
         style={[styles.card, selected && styles.selectedCard]}
       >
-        <Text style={styles.cardText}>{card.rank}{card.suit}</Text>
-        {card.wild && <Text style={styles.wildText}>WILD</Text>}
+        <Text style={styles.cardText}>
+          {card.rank}
+          {card.suit}
+        </Text>
+        {isWild && <Text style={styles.wildText}>WILD</Text>}
       </Pressable>
     );
   }
@@ -227,13 +280,29 @@ export default function App() {
       <Text style={styles.title}>Wild Hands</Text>
       <Text style={styles.subtitle}>Friday Night at Grace&apos;s</Text>
 
+      <View style={styles.scoreRow}>
+        <Text style={styles.scoreText}>You: {playerScore}</Text>
+        <Text style={styles.scoreText}>Grace: {graceScore}</Text>
+      </View>
+
+      <Text style={styles.roundText}>Round {round} of 3</Text>
+
+      <View style={styles.wildReveal}>
+        <Text style={styles.wildRevealText}>
+          Wild: {wildCard.rank}
+          {wildCard.suit}
+        </Text>
+      </View>
+
       <View style={styles.table}>
         <Text style={styles.playerName}>Grace</Text>
+
         {handsRevealed ? (
           <View style={styles.revealedHand}>
             {graceHand.map((card) => (
               <Text key={card.id} style={styles.revealedCard}>
-                {card.rank}{card.suit}
+                {card.rank}
+                {card.suit}
               </Text>
             ))}
           </View>
@@ -243,17 +312,18 @@ export default function App() {
 
         <View style={styles.centerRow}>
           <View style={styles.deck}>
-            <Text style={styles.deckLabel}>Deck</Text>
+            <Text style={styles.deckLabelLight}>Deck</Text>
             <Text style={styles.deckCount}>{deck.length}</Text>
           </View>
 
           <View style={styles.discard}>
-            <Text style={styles.deckLabel}>Discard</Text>
-            <Text style={styles.cardText}>{topDiscard ? `${topDiscard.rank}${topDiscard.suit}` : "—"}</Text>
+            <Text style={styles.deckLabelDark}>Discard</Text>
+            <Text style={styles.cardText}>
+              {topDiscard ? `${topDiscard.rank}${topDiscard.suit}` : "—"}
+            </Text>
           </View>
         </View>
 
-        <Text style={styles.wildRule}>3s are wild</Text>
         <Text style={styles.playerName}>You</Text>
       </View>
 
@@ -268,10 +338,6 @@ export default function App() {
           <Text style={styles.buttonText}>Draw Deck</Text>
         </Pressable>
 
-        <Pressable style={styles.button} onPress={goOut}>
-          <Text style={styles.buttonText}>Go Out</Text>
-        </Pressable>
-        
         <Pressable style={styles.button} onPress={takeDiscard}>
           <Text style={styles.buttonText}>Take Discard</Text>
         </Pressable>
@@ -279,13 +345,21 @@ export default function App() {
         <Pressable style={styles.button} onPress={discardCard}>
           <Text style={styles.buttonText}>Discard</Text>
         </Pressable>
+
+        <Pressable style={styles.button} onPress={goOut}>
+          <Text style={styles.buttonText}>Go Out</Text>
+        </Pressable>
       </View>
+
+      {currentTurn === "roundOver" && round < 3 && (
+        <Pressable style={styles.smallButton} onPress={nextRound}>
+          <Text style={styles.smallButtonText}>Next Round</Text>
+        </Pressable>
+      )}
 
       <Pressable style={styles.smallButton} onPress={restartGame}>
         <Text style={styles.smallButtonText}>Restart</Text>
       </Pressable>
-
-      <Text style={styles.roundText}>Round {round} of 3</Text>
     </View>
   );
 }
@@ -296,29 +370,56 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "#F4E7D3",
     alignItems: "center",
-    paddingTop: 35,
+    paddingTop: 30,
   },
   title: {
-    fontSize: 40,
+    fontSize: 38,
     fontWeight: "bold",
     color: "#7A1E2C",
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 17,
     color: "#2E1B12",
-    marginBottom: 12,
+    marginBottom: 8,
+  },
+  scoreRow: {
+    flexDirection: "row",
+    gap: 28,
+    marginBottom: 4,
+  },
+  scoreText: {
+    color: "#2E1B12",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  roundText: {
+    color: "#2E1B12",
+    fontSize: 15,
+    marginBottom: 6,
+  },
+  wildReveal: {
+    backgroundColor: "#D8A441",
+    paddingVertical: 6,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  wildRevealText: {
+    color: "#2E1B12",
+    fontWeight: "bold",
+    fontSize: 17,
   },
   table: {
     width: 330,
-    height: 360,
+    height: 330,
     backgroundColor: "#6B3F24",
     borderRadius: 40,
     alignItems: "center",
     justifyContent: "space-around",
-    padding: 18,
+    padding: 16,
   },
   playerName: {
-    fontSize: 24,
+    fontSize: 22,
     color: "#D8A441",
     fontWeight: "bold",
   },
@@ -332,7 +433,7 @@ const styles = StyleSheet.create({
   },
   deck: {
     width: 80,
-    height: 110,
+    height: 105,
     backgroundColor: "#7A1E2C",
     borderRadius: 10,
     alignItems: "center",
@@ -340,13 +441,17 @@ const styles = StyleSheet.create({
   },
   discard: {
     width: 80,
-    height: 110,
+    height: 105,
     backgroundColor: "#FFF8EE",
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  deckLabel: {
+  deckLabelLight: {
+    color: "#F4E7D3",
+    fontWeight: "bold",
+  },
+  deckLabelDark: {
     color: "#2E1B12",
     fontWeight: "bold",
   },
@@ -355,26 +460,23 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
   },
-  wildRule: {
-    color: "#F4E7D3",
-    fontSize: 20,
-  },
   message: {
-    marginTop: 14,
+    marginTop: 12,
     width: 330,
     textAlign: "center",
     color: "#7A1E2C",
-    fontSize: 17,
-    minHeight: 45,
+    fontSize: 16,
+    minHeight: 42,
   },
   hand: {
-    height: 120,
-    width: "100%",
-    maxWidth: 390,
+    height: 118,
+    width: 390,
+    maxWidth: "100%",
     flexGrow: 0,
+    alignSelf: "center",
   },
   handContent: {
-    minWidth: "100%",
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 10,
@@ -396,7 +498,7 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -8 }],
   },
   cardText: {
-    fontSize: 24,
+    fontSize: 23,
     color: "#2E1B12",
     fontWeight: "bold",
   },
@@ -408,19 +510,20 @@ const styles = StyleSheet.create({
   buttons: {
     flexDirection: "row",
     gap: 8,
-    marginTop: 12,
+    marginTop: 10,
     flexWrap: "wrap",
     justifyContent: "center",
+    maxWidth: 380,
   },
   button: {
     backgroundColor: "#7A1E2C",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
     borderRadius: 12,
   },
   buttonText: {
     color: "#F4E7D3",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "bold",
   },
   smallButton: {
@@ -428,16 +531,11 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     paddingHorizontal: 18,
     borderRadius: 10,
-    marginTop: 12,
+    marginTop: 10,
   },
   smallButtonText: {
     color: "#2E1B12",
     fontWeight: "bold",
-  },
-  roundText: {
-    marginTop: 8,
-    color: "#2E1B12",
-    fontSize: 16,
   },
   revealedHand: {
     flexDirection: "row",
