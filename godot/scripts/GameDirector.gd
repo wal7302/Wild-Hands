@@ -3,6 +3,8 @@ extends Node2D
 const CardVisual = preload("res://scripts/CardVisual.gd")
 const PlayerHand = preload("res://scripts/PlayerHand.gd")
 const DiscardPile = preload("res://scripts/DiscardPile.gd")
+const GameAudio = preload("res://scripts/GameAudio.gd")
+const GraceReaction = preload("res://scripts/GraceReaction.gd")
 
 var cranberry := Color("#7A1E2C")
 var cream := Color("#F4E7D3")
@@ -13,14 +15,20 @@ var deck_position := Vector2(165, 350)
 var player_hand: PlayerHand
 var discard_pile: DiscardPile
 var message_label: Label
+var audio: GameAudio
+var grace_reaction: GraceReaction
 
 func _ready():
+	audio = GameAudio.new()
+	add_child(audio)
+
 	draw_background()
 	draw_title()
 	draw_table()
 	draw_deck()
 	create_discard_pile()
 	create_player_hand()
+	create_grace_reaction()
 	create_buttons()
 	deal_cards()
 
@@ -104,6 +112,11 @@ func create_player_hand():
 	player_hand.position = Vector2(195, 535)
 	add_child(player_hand)
 
+func create_grace_reaction():
+	grace_reaction = GraceReaction.new()
+	grace_reaction.position = Vector2(195, 185)
+	add_child(grace_reaction)
+
 func create_buttons():
 	var discard_button := Button.new()
 	discard_button.text = "Discard"
@@ -128,6 +141,7 @@ func deal_cards():
 		var tween := create_tween()
 		tween.tween_property(card, "position", player_hand.global_position, 0.45).set_delay(i * 0.25)
 		tween.tween_callback(func():
+			audio.play_card_deal()
 			card.get_parent().remove_child(card)
 			player_hand.add_card(card)
 		).set_delay(i * 0.25 + 0.45)
@@ -135,6 +149,7 @@ func deal_cards():
 func discard_selected_card():
 	if player_hand.selected_card == null:
 		message_label.text = "Pick a card first, honey."
+		grace_reaction.say("Pick a card first, honey.")
 		return
 
 	var card = player_hand.selected_card
@@ -152,7 +167,10 @@ func discard_selected_card():
 		discard_pile.place_card(card)
 
 		if card.is_wild:
+			audio.play_wild_discard()
 			message_label.text = "...Honey. You discarded a wild."
+			grace_reaction.say("...Honey.")
 		else:
+			audio.play_card_discard()
 			message_label.text = "Card discarded."
 	)
