@@ -29,7 +29,7 @@ class CommandProcessor:
             if card is None:
                 return CommandResult(
                     False,
-                    "No card could be drawn."
+                    "You cannot draw right now."
                 )
 
             return CommandResult(
@@ -58,6 +58,12 @@ class CommandProcessor:
                     "Invalid discard index."
                 )
 
+            if card is None:
+                return CommandResult(
+                    False,
+                    "You cannot discard right now."
+                )
+
             return CommandResult(
                 True,
                 f"{command.player_name} discarded {card.display}.",
@@ -77,6 +83,12 @@ class CommandProcessor:
             )
 
         if command.command_type == CommandType.END_TURN:
+            if not round_state.turn_state.is_complete():
+                return CommandResult(
+                    False,
+                    "Turn cannot end until a card is discarded."
+                )
+
             round_state.end_turn()
 
             return CommandResult(
