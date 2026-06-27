@@ -1,38 +1,46 @@
-class SimulationStats:
+from engine.ai.ai_player import AIPlayer
+from engine.game.game import Game
+from engine.game.game_modes import GameMode
+from engine.simulation.match_simulator import MatchSimulator
+from engine.simulation.simulation_stats import SimulationStats
 
-    @staticmethod
-    def summarize(games):
 
-        wins = {}
-        total_scores = {}
-        wild_tosses = 0
+games = []
 
-        for game in games:
+for _ in range(100):
 
-            winner = game.winner().name
-            wins[winner] = wins.get(winner, 0) + 1
+    players = [
+        AIPlayer("Grace", personality="sweetheart"),
+        AIPlayer("Rico", personality="trash_talker"),
+        AIPlayer("Nikki", personality="sneaky_one"),
+        AIPlayer("Lulu", personality="crazy_one"),
+    ]
 
-            for player in game.players:
-                total_scores[player.name] = (
-                    total_scores.get(player.name, 0)
-                    + player.total_score
-                )
+    game = Game(
+        players,
+        mode=GameMode.QUICK,
+        starting_round=3,
+    )
 
-            for round_record in game.match.rounds:
-                for event in round_record.get("events", []):
-                    if event.event_type == "wild_discarded":
-                        wild_tosses += 1
+    games.append(
+        MatchSimulator.play_match(game)
+    )
 
-        game_count = len(games)
 
-        average_scores = {
-            name: round(score / game_count, 2)
-            for name, score in total_scores.items()
-        }
+stats = SimulationStats.summarize(games)
 
-        return {
-            "games_played": game_count,
-            "wins": wins,
-            "average_scores": average_scores,
-            "wild_tosses": wild_tosses,
-        }
+print("WILD HANDS BALANCE SIMULATION")
+print("-----------------------------")
+print(f"Games Played: {stats['games_played']}")
+print()
+print("Wins:")
+for name, wins in stats["wins"].items():
+    print(f"{name}: {wins}")
+
+print()
+print("Average Scores:")
+for name, score in stats["average_scores"].items():
+    print(f"{name}: {score}")
+
+print()
+print(f"Wild Tosses: {stats['wild_tosses']}")
