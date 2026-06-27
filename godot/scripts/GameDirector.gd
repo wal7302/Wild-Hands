@@ -18,6 +18,11 @@ var message_label: Label
 var audio: GameAudio
 var grace_reaction: GraceReaction
 
+var current_turn := "player"
+var round_number := 1
+var max_rounds := 3
+var player_discards_this_round := 0
+
 func _ready():
 	audio = GameAudio.new()
 	add_child(audio)
@@ -147,6 +152,10 @@ func deal_cards():
 		).set_delay(i * 0.25 + 0.45)
 
 func discard_selected_card():
+    if current_turn != "player":
+		message_label.text = "Wait your turn."
+		return
+
 	if player_hand.selected_card == null:
 		message_label.text = "Pick a card first, honey."
 		grace_reaction.say("Pick a card first, honey.")
@@ -173,4 +182,18 @@ func discard_selected_card():
 		else:
 			audio.play_card_discard()
 			message_label.text = "Card discarded."
+
+		player_discards_this_round += 1
+		current_turn = "grace"
+		message_label.text += " Grace is thinking..."
+		grace_take_turn()
+
+func grace_take_turn():
+	await get_tree().create_timer(1.0).timeout
+
+	message_label.text = "Grace discards."
+	grace_reaction.say("Your move.")
+
+	current_turn = "player"
+
 	)
