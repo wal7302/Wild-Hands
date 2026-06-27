@@ -62,7 +62,8 @@ class Game:
 
         self.match.add_round(
             self.round_number,
-            scores
+            scores,
+            events=self.round.events.events if self.round else [],
         )
 
         return scores
