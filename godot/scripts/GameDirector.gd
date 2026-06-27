@@ -5,6 +5,7 @@ const PlayerHand = preload("res://scripts/PlayerHand.gd")
 const DiscardPile = preload("res://scripts/DiscardPile.gd")
 const GameAudio = preload("res://scripts/GameAudio.gd")
 const GraceReaction = preload("res://scripts/GraceReaction.gd")
+const EngineBridge = preload("res://scripts/EngineBridge.gd")
 
 var cranberry := Color("#7A1E2C")
 var cream := Color("#F4E7D3")
@@ -14,6 +15,7 @@ var gold := Color("#D8A441")
 var deck_position := Vector2(165, 350)
 var grace_card_position := Vector2(165, 270)
 
+var engine
 var player_hand: PlayerHand
 var discard_pile: DiscardPile
 var message_label: Label
@@ -24,24 +26,16 @@ var grace_reaction: GraceReaction
 
 var current_turn := "player"
 var player_has_drawn := false
-var draw_index := 0
 var round_number := 1
 var hand_size := 3
 var player_score := 0
 var grace_score := 0
 var round_active := true
 
-var draw_cards = [
-	{"rank": "8", "suit": "♥", "wild": false},
-	{"rank": "3", "suit": "♠", "wild": true},
-	{"rank": "Q", "suit": "♣", "wild": false},
-	{"rank": "5", "suit": "♦", "wild": false},
-	{"rank": "4", "suit": "♥", "wild": false},
-	{"rank": "5", "suit": "♥", "wild": false},
-	{"rank": "6", "suit": "♥", "wild": false}
-]
-
 func _ready():
+	engine = EngineBridge.new()
+	add_child(engine)
+
 	audio = GameAudio.new()
 	add_child(audio)
 
@@ -182,21 +176,19 @@ func start_round():
 func clear_player_hand():
 	for card in player_hand.cards:
 		card.queue_free()
+
 	player_hand.cards.clear()
 	player_hand.selected_card = null
 	player_hand.arrange_cards()
 
 func deal_cards():
-	var faces = [
-		{"rank": "3", "suit": "♥", "wild": hand_size == 3},
-		{"rank": "7", "suit": "♣", "wild": hand_size == 7},
-		{"rank": "K", "suit": "♦", "wild": false},
-		{"rank": "4", "suit": "♥", "wild": hand_size == 4},
-		{"rank": "5", "suit": "♥", "wild": hand_size == 5}
-	]
-
 	for i in range(hand_size):
-		var card_data = faces[i % faces.size()]
+		var card_data = engine.draw_card()
+
+		if card_data == null:
+			message_label.text = "Deck is empty."
+			return
+
 		var card = CardVisual.new()
 		card.position = deck_position
 		card.set_card_face(card_data["rank"], card_data["suit"], card_data["wild"])
@@ -223,8 +215,11 @@ func draw_card():
 		message_label.text = "Discard before drawing again."
 		return
 
-	var card_data = draw_cards[draw_index % draw_cards.size()]
-	draw_index += 1
+	var card_data = engine.draw_card()
+
+	if card_data == null:
+		message_label.text = "Deck is empty."
+		return
 
 	var card = CardVisual.new()
 	card.position = deck_position
