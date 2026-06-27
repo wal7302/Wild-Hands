@@ -1,13 +1,19 @@
 class_name CardVisual
-extends Control
+extends Area2D
 
 var rank := ""
 var suit := ""
 var is_wild := false
 var face_up := false
+var card_size := Vector2(58, 82)
 
 func _ready():
-	size = Vector2(58, 82)
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = card_size
+	shape.shape = rect
+	shape.position = card_size / 2
+	add_child(shape)
 	queue_redraw()
 
 func set_card_back():
@@ -22,7 +28,7 @@ func set_card_face(new_rank: String, new_suit: String, wild: bool = false):
 	queue_redraw()
 
 func _draw():
-	var rect := Rect2(Vector2.ZERO, size)
+	var rect := Rect2(Vector2.ZERO, card_size)
 
 	draw_rect(rect, Color("#FFFDF7"), true)
 	draw_rect(rect, Color("#7A1E2C"), false, 3)
