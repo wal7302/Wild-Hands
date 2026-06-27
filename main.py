@@ -148,3 +148,11 @@ for player in players:
 
 print()
 print(f"Winner: {game.winner().name}")
+
+SaveGame.save(
+    "last_game.json",
+    GameSerializer.serialize(game)
+)
+
+print()
+print("Game saved successfully.")
