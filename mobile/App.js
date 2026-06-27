@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, Pressable, ScrollView } from "react-native";
 
 const suits = ["♥", "♦", "♣", "♠"];
 const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+const [discardDrawCardId, setDiscardDrawCardId] = useState(null);
 
 function buildDeck() {
   const deck = [];
@@ -58,6 +59,7 @@ export default function App() {
     setDeck(nextDeck);
     setPlayerHand([...playerHand, card]);
     setHasDrawn(true);
+    setDiscardDrawCardId(null);
     setMessage("Choose a card to discard.");
   }
 
@@ -82,6 +84,7 @@ function takeDiscard() {
 
   setDiscardPile(nextDiscardPile);
   setPlayerHand([...playerHand, card]);
+  setDiscardDrawCardId(card.id);
   setHasDrawn(true);
   setMessage("You picked up the discard. Now choose a card to discard.");
 }
@@ -102,13 +105,18 @@ function takeDiscard() {
       return;
     }
 
+    if (selectedCard.id === discardDrawCardId) {
+      setMessage("You have to keep the card you picked up from discard.");
+      return;
+    }
+
     const nextHand = playerHand.filter((card) => card.id !== selectedCard.id);
     const nextDiscardPile = [...discardPile, selectedCard];
 
     setPlayerHand(nextHand);
     setDiscardPile(nextDiscardPile);
     setSelectedCard(null);
-    setHasDrawn(false);
+    setDiscardDrawCardId(null);
     setCurrentTurn("grace");
 
     if (selectedCard.wild) {
@@ -161,6 +169,7 @@ function takeDiscard() {
     setGraceHand([]);
     setDiscardPile([]);
     setSelectedCard(null);
+    setDiscardDrawCardId(null);
     setCurrentTurn("player");
     setHasDrawn(false);
     setRound(round + 1);
