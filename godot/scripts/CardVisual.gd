@@ -35,11 +35,11 @@ func _draw():
 
 	if face_up:
 		var suit_color = Color("#B21E35") if suit in ["♥", "♦"] else Color("#1E1A18")
-		draw_string(get_theme_default_font(), Vector2(8, 22), rank, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, suit_color)
-		draw_string(get_theme_default_font(), Vector2(20, 52), suit, HORIZONTAL_ALIGNMENT_LEFT, -1, 28, suit_color)
+		draw_string(ThemeDB.fallback_font, Vector2(8, 22), rank, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, suit_color)
+		draw_string(ThemeDB.fallback_font, Vector2(20, 52), suit, HORIZONTAL_ALIGNMENT_LEFT, -1, 28, suit_color)
 
 		if is_wild:
 			draw_rect(Rect2(12, 60, 34, 14), Color("#7A1E2C"), true)
-			draw_string(get_theme_default_font(), Vector2(15, 72), "WILD", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("#D8A441"))
+			draw_string(ThemeDB.fallback_font, Vector2(15, 72), "WILD", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("#D8A441"))
 	else:
-		draw_string(get_theme_default_font(), Vector2(17, 52), "◆", HORIZONTAL_ALIGNMENT_LEFT, -1, 32, Color("#7A1E2C"))
+		draw_string(ThemeDB.fallback_font, Vector2(17, 52), "◆", HORIZONTAL_ALIGNMENT_LEFT, -1, 32, Color("#7A1E2C"))
