@@ -22,7 +22,8 @@ def show_discard_pile(round_state):
 
 players = [
     Player("Tasha"),
-    AIPlayer("Grace", personality="Host"),
+    AIPlayer("Grace", personality="sweetheart"),
+    AIPlayer("Rico", personality="trash_talker"),
 ]
 
 game = Game(
@@ -57,6 +58,11 @@ while True:
         print()
         print("Hand:")
         print(show_hand(player))
+
+        if hasattr(player, "should_speak") and player.should_speak():
+            phrase = player.choose_phrase()
+            if phrase:
+                print(f'{player.name} says: "{phrase}"')
 
         drawn = turn.draw()
 
