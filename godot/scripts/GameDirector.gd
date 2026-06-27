@@ -1,17 +1,22 @@
 extends Node2D
 
 const CardVisual = preload("res://scripts/CardVisual.gd")
+const PlayerHand = preload("res://scripts/PlayerHand.gd")
 
 var cranberry := Color("#7A1E2C")
 var cream := Color("#F4E7D3")
 var walnut := Color("#6B3F24")
 var gold := Color("#D8A441")
 
+var deck_position := Vector2(165, 350)
+var player_hand: PlayerHand
+
 func _ready():
 	draw_background()
 	draw_title()
 	draw_table()
 	draw_deck()
+	create_player_hand()
 	deal_cards()
 
 func draw_background():
@@ -57,30 +62,45 @@ func draw_table():
 
 	var you := Label.new()
 	you.text = "You"
-	you.position = Vector2(175, 585)
+	you.position = Vector2(175, 590)
 	you.add_theme_font_size_override("font_size", 24)
 	you.add_theme_color_override("font_color", gold)
 	add_child(you)
 
+	var wild := Label.new()
+	wild.text = "3s are wild"
+	wild.position = Vector2(135, 430)
+	wild.add_theme_font_size_override("font_size", 22)
+	wild.add_theme_color_override("font_color", cream)
+	add_child(wild)
+
 func draw_deck():
 	var deck = CardVisual.new()
-	deck.position = Vector2(165, 350)
+	deck.position = deck_position
 	deck.set_card_back()
 	add_child(deck)
 
+func create_player_hand():
+	player_hand = PlayerHand.new()
+	player_hand.position = Vector2(195, 535)
+	add_child(player_hand)
+
 func deal_cards():
-	var positions = [
-		Vector2(115, 520),
-		Vector2(165, 535),
-		Vector2(215, 520)
+	var faces = [
+		{"rank": "3", "suit": "♥", "wild": true},
+		{"rank": "7", "suit": "♣", "wild": false},
+		{"rank": "K", "suit": "♦", "wild": false}
 	]
 
-	for i in range(3):
+	for i in range(faces.size()):
 		var card = CardVisual.new()
-		card.position = Vector2(165, 350)
-		card.set_card_face(["3", "7", "K"][i], ["♥", "♣", "♦"][i], i == 0)
+		card.position = deck_position
+		card.set_card_face(faces[i]["rank"], faces[i]["suit"], faces[i]["wild"])
 		add_child(card)
 
 		var tween := create_tween()
-		tween.tween_property(card, "position", positions[i], 0.45).set_delay(i * 0.25)
-		tween.parallel().tween_property(card, "rotation_degrees", [-10, 0, 10][i], 0.45).set_delay(i * 0.25)
+		tween.tween_property(card, "position", player_hand.global_position, 0.45).set_delay(i * 0.25)
+		tween.tween_callback(func():
+			card.get_parent().remove_child(card)
+			player_hand.add_card(card)
+		).set_delay(i * 0.25 + 0.45)
