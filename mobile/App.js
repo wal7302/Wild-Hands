@@ -3,55 +3,45 @@ import { StyleSheet, Text, View, Pressable, ScrollView } from "react-native";
 
 const suits = ["♥", "♦", "♣", "♠"];
 const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
-const [discardDrawCardId, setDiscardDrawCardId] = useState(null);
 
 function buildDeck() {
   const deck = [];
-
   suits.forEach((suit) => {
     ranks.forEach((rank) => {
-      deck.push({
-        id: `${rank}${suit}`,
-        rank,
-        suit,
-        wild: rank === "3",
-      });
+      deck.push({ id: `${rank}${suit}`, rank, suit, wild: rank === "3" });
     });
   });
-
   return deck.sort(() => Math.random() - 0.5);
 }
 
-export default function App() {
-  const startingDeck = buildDeck();
-  const playerStartingHand = startingDeck.splice(-3);
-  const graceStartingHand = startingDeck.splice(-3);
+function createInitialGame() {
+  const deck = buildDeck();
+  return {
+    deck,
+    playerHand: deck.splice(-3),
+    graceHand: deck.splice(-3),
+    discardPile: [],
+  };
+}
 
-  const [deck, setDeck] = useState(startingDeck);
-  const [playerHand, setPlayerHand] = useState(playerStartingHand);
-  const [graceHand, setGraceHand] = useState(graceStartingHand);
-  const [discardPile, setDiscardPile] = useState([]);
+export default function App() {
+  const initial = createInitialGame();
+
+  const [deck, setDeck] = useState(initial.deck);
+  const [playerHand, setPlayerHand] = useState(initial.playerHand);
+  const [graceHand, setGraceHand] = useState(initial.graceHand);
+  const [discardPile, setDiscardPile] = useState(initial.discardPile);
   const [selectedCard, setSelectedCard] = useState(null);
   const [currentTurn, setCurrentTurn] = useState("player");
   const [hasDrawn, setHasDrawn] = useState(false);
+  const [discardDrawCardId, setDiscardDrawCardId] = useState(null);
   const [round, setRound] = useState(1);
-  const [message, setMessage] = useState("Your turn. Draw a card.");
+  const [message, setMessage] = useState("Your turn. Draw from deck or take discard.");
 
   function drawFromDeck() {
-    if (currentTurn !== "player") {
-      setMessage("Wait your turn.");
-      return;
-    }
-
-    if (hasDrawn) {
-      setMessage("You already drew. Now discard.");
-      return;
-    }
-
-    if (deck.length === 0) {
-      setMessage("Deck is empty.");
-      return;
-    }
+    if (currentTurn !== "player") return setMessage("Wait your turn.");
+    if (hasDrawn) return setMessage("You already drew. Now discard.");
+    if (deck.length === 0) return setMessage("Deck is empty.");
 
     const nextDeck = [...deck];
     const card = nextDeck.pop();
@@ -60,54 +50,31 @@ export default function App() {
     setPlayerHand([...playerHand, card]);
     setHasDrawn(true);
     setDiscardDrawCardId(null);
-    setMessage("Choose a card to discard.");
+    setMessage("You drew from the deck. Now discard.");
   }
 
-function takeDiscard() {
-  if (currentTurn !== "player") {
-    setMessage("Wait your turn.");
-    return;
+  function takeDiscard() {
+    if (currentTurn !== "player") return setMessage("Wait your turn.");
+    if (hasDrawn) return setMessage("You already drew. Now discard.");
+    if (discardPile.length === 0) return setMessage("No discarded card to take.");
+
+    const nextDiscardPile = [...discardPile];
+    const card = nextDiscardPile.pop();
+
+    setDiscardPile(nextDiscardPile);
+    setPlayerHand([...playerHand, card]);
+    setHasDrawn(true);
+    setDiscardDrawCardId(card.id);
+    setMessage("You picked up the discard. You must keep that card this turn.");
   }
 
-  if (hasDrawn) {
-    setMessage("You already drew. Now discard.");
-    return;
-  }
-
-  if (discardPile.length === 0) {
-    setMessage("No discarded card to take.");
-    return;
-  }
-
-  const nextDiscardPile = [...discardPile];
-  const card = nextDiscardPile.pop();
-
-  setDiscardPile(nextDiscardPile);
-  setPlayerHand([...playerHand, card]);
-  setDiscardDrawCardId(card.id);
-  setHasDrawn(true);
-  setMessage("You picked up the discard. Now choose a card to discard.");
-}
-  
   function discardCard() {
-    if (currentTurn !== "player") {
-      setMessage("Wait your turn.");
-      return;
-    }
-
-    if (!hasDrawn) {
-      setMessage("Draw before you discard.");
-      return;
-    }
-
-    if (!selectedCard) {
-      setMessage("Pick a card first, honey.");
-      return;
-    }
+    if (currentTurn !== "player") return setMessage("Wait your turn.");
+    if (!hasDrawn) return setMessage("Draw before you discard.");
+    if (!selectedCard) return setMessage("Pick a card first, honey.");
 
     if (selectedCard.id === discardDrawCardId) {
-      setMessage("You have to keep the card you picked up from discard.");
-      return;
+      return setMessage("You have to keep the card you picked up from discard.");
     }
 
     const nextHand = playerHand.filter((card) => card.id !== selectedCard.id);
@@ -116,76 +83,49 @@ function takeDiscard() {
     setPlayerHand(nextHand);
     setDiscardPile(nextDiscardPile);
     setSelectedCard(null);
+    setHasDrawn(false);
     setDiscardDrawCardId(null);
     setCurrentTurn("grace");
+    setMessage(selectedCard.wild ? "...Honey. You discarded a wild. Grace is thinking." : "Card discarded. Grace is thinking.");
 
-    if (selectedCard.wild) {
-      setMessage("...Honey. You discarded a wild. Grace is thinking.");
-    } else {
-      setMessage("Card discarded. Grace is thinking.");
-    }
-
-    setTimeout(() => {
-      graceTurn(nextDeckSafe(deck), nextDiscardPile);
-    }, 900);
-  }
-
-  function nextDeckSafe(currentDeck) {
-    return [...currentDeck];
+    setTimeout(() => graceTurn(deck, nextDiscardPile), 800);
   }
 
   function graceTurn(currentDeck, currentDiscardPile) {
-    let nextDeck = [...currentDeck];
+    const nextDeck = [...currentDeck];
     let nextGraceHand = [...graceHand];
 
     if (nextDeck.length > 0) {
-      const drawnCard = nextDeck.pop();
-      nextGraceHand.push(drawnCard);
+      nextGraceHand.push(nextDeck.pop());
     }
 
-    let discardedCard = null;
-
-    if (nextGraceHand.length > 0) {
-      discardedCard = nextGraceHand[nextGraceHand.length - 1];
-      nextGraceHand = nextGraceHand.slice(0, -1);
-    }
+    const discardedCard = nextGraceHand.pop();
 
     setDeck(nextDeck);
     setGraceHand(nextGraceHand);
 
     if (discardedCard) {
       setDiscardPile([...currentDiscardPile, discardedCard]);
-      setMessage("Grace discards. Your turn. Draw a card.");
+      setMessage("Grace discards. Your turn. Draw from deck or take discard.");
     } else {
-      setMessage("Grace passes. Your turn. Draw a card.");
+      setMessage("Grace passes. Your turn.");
     }
 
     setCurrentTurn("player");
   }
 
-  function startNewRound() {
-    setDeck(buildDeck());
-    setPlayerHand([]);
-    setGraceHand([]);
-    setDiscardPile([]);
-    setSelectedCard(null);
-    setDiscardDrawCardId(null);
-    setCurrentTurn("player");
-    setHasDrawn(false);
-    setRound(round + 1);
-    setMessage("New round. Your turn. Draw a card.");
-  }
-
   function restartGame() {
-    setDeck(buildDeck());
-    setPlayerHand([]);
-    setGraceHand([]);
+    const fresh = createInitialGame();
+    setDeck(fresh.deck);
+    setPlayerHand(fresh.playerHand);
+    setGraceHand(fresh.graceHand);
     setDiscardPile([]);
     setSelectedCard(null);
     setCurrentTurn("player");
     setHasDrawn(false);
+    setDiscardDrawCardId(null);
     setRound(1);
-    setMessage("Your turn. Draw a card.");
+    setMessage("Your turn. Draw from deck or take discard.");
   }
 
   function renderCard(card) {
@@ -197,10 +137,7 @@ function takeDiscard() {
         onPress={() => setSelectedCard(card)}
         style={[styles.card, selected && styles.selectedCard]}
       >
-        <Text style={styles.cardText}>
-          {card.rank}
-          {card.suit}
-        </Text>
+        <Text style={styles.cardText}>{card.rank}{card.suit}</Text>
         {card.wild && <Text style={styles.wildText}>WILD</Text>}
       </Pressable>
     );
@@ -219,15 +156,13 @@ function takeDiscard() {
 
         <View style={styles.centerRow}>
           <View style={styles.deck}>
-            <Text style={styles.deckText}>Deck</Text>
+            <Text style={styles.deckLabel}>Deck</Text>
             <Text style={styles.deckCount}>{deck.length}</Text>
           </View>
 
           <View style={styles.discard}>
-            <Text style={styles.deckText}>Discard</Text>
-            <Text style={styles.cardText}>
-              {topDiscard ? `${topDiscard.rank}${topDiscard.suit}` : "—"}
-            </Text>
+            <Text style={styles.deckLabel}>Discard</Text>
+            <Text style={styles.cardText}>{topDiscard ? `${topDiscard.rank}${topDiscard.suit}` : "—"}</Text>
           </View>
         </View>
 
@@ -237,7 +172,7 @@ function takeDiscard() {
 
       <Text style={styles.message}>{message}</Text>
 
-      <ScrollView horizontal style={styles.hand}>
+      <ScrollView horizontal style={styles.hand} contentContainerStyle={styles.handContent}>
         {playerHand.map(renderCard)}
       </ScrollView>
 
@@ -255,15 +190,9 @@ function takeDiscard() {
         </Pressable>
       </View>
 
-      <View style={styles.footerButtons}>
-        <Pressable style={styles.smallButton} onPress={startNewRound}>
-          <Text style={styles.smallButtonText}>New Round</Text>
-        </Pressable>
-
-        <Pressable style={styles.smallButton} onPress={restartGame}>
-          <Text style={styles.smallButtonText}>Restart</Text>
-        </Pressable>
-      </View>
+      <Pressable style={styles.smallButton} onPress={restartGame}>
+        <Text style={styles.smallButtonText}>Restart</Text>
+      </Pressable>
 
       <Text style={styles.roundText}>Round {round} of 3</Text>
     </View>
@@ -273,9 +202,10 @@ function takeDiscard() {
 const styles = StyleSheet.create({
   container: {
     minHeight: "100vh",
+    width: "100%",
     backgroundColor: "#F4E7D3",
     alignItems: "center",
-    paddingTop: 45,
+    paddingTop: 35,
   },
   title: {
     fontSize: 40,
@@ -285,11 +215,11 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 18,
     color: "#2E1B12",
-    marginBottom: 15,
+    marginBottom: 12,
   },
   table: {
     width: 330,
-    height: 390,
+    height: 360,
     backgroundColor: "#6B3F24",
     borderRadius: 40,
     alignItems: "center",
@@ -320,12 +250,12 @@ const styles = StyleSheet.create({
   discard: {
     width: 80,
     height: 110,
-    backgroundColor: "#F4E7D3",
+    backgroundColor: "#FFF8EE",
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  deckText: {
+  deckLabel: {
     color: "#2E1B12",
     fontWeight: "bold",
   },
@@ -339,18 +269,24 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   message: {
-    marginTop: 18,
+    marginTop: 14,
     width: 330,
     textAlign: "center",
     color: "#7A1E2C",
-    fontSize: 18,
-    minHeight: 50,
+    fontSize: 17,
+    minHeight: 45,
   },
-   hand: {
+  hand: {
     height: 120,
-    maxHeight: 120,
-    marginTop: 10,
+    width: "100%",
+    maxWidth: 390,
     flexGrow: 0,
+  },
+  handContent: {
+    minWidth: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 10,
   },
   card: {
     width: 70,
@@ -380,39 +316,35 @@ const styles = StyleSheet.create({
   },
   buttons: {
     flexDirection: "row",
-    gap: 10,
-    marginTop: 18,
+    gap: 8,
+    marginTop: 12,
     flexWrap: "wrap",
     justifyContent: "center",
   },
   button: {
     backgroundColor: "#7A1E2C",
-    paddingVertical: 13,
-    paddingHorizontal: 30,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 12,
   },
   buttonText: {
     color: "#F4E7D3",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
-  },
-  footerButtons: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 14,
   },
   smallButton: {
     backgroundColor: "#D8A441",
     paddingVertical: 9,
     paddingHorizontal: 18,
     borderRadius: 10,
+    marginTop: 12,
   },
   smallButtonText: {
     color: "#2E1B12",
     fontWeight: "bold",
   },
   roundText: {
-    marginTop: 10,
+    marginTop: 8,
     color: "#2E1B12",
     fontSize: 16,
   },
