@@ -1,37 +1,43 @@
 from engine.experience.scene import Scene
+from engine.experience.house_builder import HouseBuilder
 
 
 class GraceHouseIntro:
 
     @staticmethod
-    def build():
+    def build(house_state=None):
 
-        scene = Scene("Friday Night")
+        house = house_state or HouseBuilder.default_friday_night()
 
-        scene.add("🏡 Grace's House")
+        scene = Scene(house.time_label)
+
+        scene.add("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        scene.add(f"🏡 {house.name}")
         scene.add("")
-        scene.add("Friday Night")
+        scene.add(house.time_label)
+        scene.add("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         scene.add("")
-        scene.add("The porch light is on.")
-        scene.add("You hear laughter inside.")
-        scene.add("")
-        scene.add("*Knock Knock*")
+
+        for detail in house.sensory_details():
+            scene.add(detail)
+            scene.add("")
+
+        scene.add("Knock...")
+        scene.add("Knock...")
         scene.add("")
         scene.add("The door opens.")
         scene.add("")
-        scene.add("Grace smiles.")
+        scene.add("🍷 Grace smiles.")
         scene.add("")
         scene.add('"Well hey there, honey."')
         scene.add("")
-        scene.add('"Come on in."')
+        scene.add("She steps back from the doorway.")
         scene.add("")
-        scene.add("Fresh cookies are cooling on the counter.")
-        scene.add("The fireplace glows softly.")
-        scene.add("Country music plays quietly.")
+        scene.add('"Come on in."')
         scene.add("")
         scene.add("A solid walnut table waits in the middle of the room.")
         scene.add("")
-        scene.add("🍷 Grace takes a sip of wine.")
+        scene.add("Grace takes a sip of wine.")
         scene.add("")
         scene.add('"Looks like everybody made it."')
         scene.add("")
