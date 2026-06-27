@@ -1,10 +1,11 @@
 class_name TableAnimationDirector
 extends Node
 
-func animate_card_from_deck(card: Node2D, deck_position: Vector2, target_position: Vector2, duration: float = 0.35):
+func animate_card_from_deck(card: Node2D, deck_position: Vector2, target_position: Vector2, duration: float = 0.35, delay: float = 0.0):
 	card.global_position = deck_position
 
 	var tween := create_tween()
+	tween.tween_interval(delay)
 	tween.tween_property(card, "global_position", target_position, duration)
 	return tween
 
