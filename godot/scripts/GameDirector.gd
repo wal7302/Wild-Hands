@@ -2,6 +2,7 @@ extends Node2D
 
 const CardVisual = preload("res://scripts/CardVisual.gd")
 const PlayerHand = preload("res://scripts/PlayerHand.gd")
+const DiscardPile = preload("res://scripts/DiscardPile.gd")
 
 var cranberry := Color("#7A1E2C")
 var cream := Color("#F4E7D3")
@@ -10,13 +11,17 @@ var gold := Color("#D8A441")
 
 var deck_position := Vector2(165, 350)
 var player_hand: PlayerHand
+var discard_pile: DiscardPile
+var message_label: Label
 
 func _ready():
 	draw_background()
 	draw_title()
 	draw_table()
 	draw_deck()
+	create_discard_pile()
 	create_player_hand()
+	create_buttons()
 	deal_cards()
 
 func draw_background():
@@ -74,16 +79,38 @@ func draw_table():
 	wild.add_theme_color_override("font_color", cream)
 	add_child(wild)
 
+	message_label = Label.new()
+	message_label.text = "Grace deals one card at a time."
+	message_label.position = Vector2(52, 650)
+	message_label.size = Vector2(300, 60)
+	message_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	message_label.add_theme_font_size_override("font_size", 18)
+	message_label.add_theme_color_override("font_color", cranberry)
+	add_child(message_label)
+
 func draw_deck():
 	var deck = CardVisual.new()
 	deck.position = deck_position
 	deck.set_card_back()
 	add_child(deck)
 
+func create_discard_pile():
+	discard_pile = DiscardPile.new()
+	discard_pile.position = Vector2(235, 350)
+	add_child(discard_pile)
+
 func create_player_hand():
 	player_hand = PlayerHand.new()
 	player_hand.position = Vector2(195, 535)
 	add_child(player_hand)
+
+func create_buttons():
+	var discard_button := Button.new()
+	discard_button.text = "Discard"
+	discard_button.position = Vector2(145, 725)
+	discard_button.size = Vector2(110, 46)
+	discard_button.pressed.connect(discard_selected_card)
+	add_child(discard_button)
 
 func deal_cards():
 	var faces = [
@@ -104,3 +131,28 @@ func deal_cards():
 			card.get_parent().remove_child(card)
 			player_hand.add_card(card)
 		).set_delay(i * 0.25 + 0.45)
+
+func discard_selected_card():
+	if player_hand.selected_card == null:
+		message_label.text = "Pick a card first, honey."
+		return
+
+	var card = player_hand.selected_card
+	player_hand.remove_card(card)
+	card.get_parent().remove_child(card)
+	add_child(card)
+	card.global_position = player_hand.global_position
+
+	var target := discard_pile.global_position
+
+	var tween := create_tween()
+	tween.tween_property(card, "global_position", target, 0.35)
+	tween.tween_callback(func():
+		card.get_parent().remove_child(card)
+		discard_pile.place_card(card)
+
+		if card.is_wild:
+			message_label.text = "...Honey. You discarded a wild."
+		else:
+			message_label.text = "Card discarded."
+	)
