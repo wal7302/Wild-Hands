@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://w6rv3c444cx2"]
+
+[node name="GameTable" type="Node2D" unique_id=1630809498]
+
+[node name="WoodTable" type="Polygon2D" parent="." unique_id=2048346259]
+color = Color(0.41960785, 0.24705882, 0.14117648, 1)
