@@ -6,16 +6,12 @@ const DiscardPileScene := preload("res://scenes/DiscardPile.tscn")
 const MessageBannerScene := preload("res://scenes/MessageBanner.tscn")
 const ActionButtonScene := preload("res://scenes/ActionButton.tscn")
 const PlayerSeatScene := preload("res://scenes/PlayerSeat.tscn")
+const RoomBackgroundScene := preload("res://scenes/RoomBackground.tscn")
+const WoodTableScene := preload("res://scenes/WoodTable.tscn")
 
 var cranberry := Color("#7A1E2C")
 var cream := Color("#F4E7D3")
-var room_gold := Color("#F7E0BD")
-var room_shadow := Color("#D6AE75")
-var walnut := Color("#6B3F24")
-var walnut_light := Color("#8A5735")
-var walnut_dark := Color("#3B2114")
 var gold := Color("#D8A441")
-var card_white := Color("#FFFDF7")
 
 var deck_position := Vector2(158, 350)
 var discard_position := Vector2(232, 350)
@@ -45,88 +41,16 @@ func _ready():
 	deal_opening_hand()
 
 func draw_room():
-	var bg: ColorRect = ColorRect.new()
-	bg.color = cream
-	bg.size = Vector2(390, 844)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
-
-	var room_shadow_panel: ColorRect = ColorRect.new()
-	room_shadow_panel.color = room_shadow
-	room_shadow_panel.position = Vector2(24, 151)
-	room_shadow_panel.size = Vector2(354, 560)
-	room_shadow_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(room_shadow_panel)
-
-	var room: ColorRect = ColorRect.new()
-	room.color = room_gold
-	room.position = Vector2(18, 145)
-	room.size = Vector2(354, 560)
-	room.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var room: Node2D = RoomBackgroundScene.instantiate()
 	add_child(room)
-
-	for i: int in range(8):
-		var glow: Line2D = Line2D.new()
-		glow.width = 1
-		glow.default_color = Color(1, 1, 1, 0.08)
-		glow.points = PackedVector2Array([
-			Vector2(24, 160 + (i * 64)),
-			Vector2(366, 160 + (i * 64))
-		])
-		add_child(glow)
 
 func draw_title():
 	add_label("Wild Hands", Vector2(78, 42), cranberry, 42)
 	add_label("Friday Night at Grace's", Vector2(100, 94), Color("#2E1B12"), 18)
 
 func draw_table():
-	var shadow: Polygon2D = Polygon2D.new()
-	shadow.color = Color(0, 0, 0, 0.18)
-	shadow.polygon = PackedVector2Array([
-		Vector2(76, 225),
-		Vector2(330, 225),
-		Vector2(358, 405),
-		Vector2(320, 645),
-		Vector2(86, 645),
-		Vector2(48, 405)
-	])
-	add_child(shadow)
-
-	var table: Polygon2D = Polygon2D.new()
-	table.color = walnut
-	table.polygon = PackedVector2Array([
-		Vector2(68, 215),
-		Vector2(322, 215),
-		Vector2(350, 395),
-		Vector2(312, 635),
-		Vector2(78, 635),
-		Vector2(40, 395)
-	])
+	var table: Node2D = WoodTableScene.instantiate()
 	add_child(table)
-
-	var table_highlight: Line2D = Line2D.new()
-	table_highlight.width = 3
-	table_highlight.default_color = walnut_light
-	table_highlight.closed = true
-	table_highlight.points = table.polygon
-	add_child(table_highlight)
-
-	var rim: Line2D = Line2D.new()
-	rim.width = 10
-	rim.default_color = walnut_dark
-	rim.closed = true
-	rim.points = table.polygon
-	add_child(rim)
-
-	for i: int in range(6):
-		var grain: Line2D = Line2D.new()
-		grain.width = 2
-		grain.default_color = Color(0.24, 0.12, 0.06, 0.22)
-		grain.points = PackedVector2Array([
-			Vector2(80, 255 + (i * 55)),
-			Vector2(310, 245 + (i * 57))
-		])
-		add_child(grain)
 
 func draw_players():
 	add_player_seat("🍷 Grace", "", Vector2(145, 235))
