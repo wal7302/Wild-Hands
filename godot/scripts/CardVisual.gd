@@ -1,4 +1,5 @@
-extends Area2D
+class_name CardVisual
+extends Node2D
 
 signal selected(card)
 signal deselected(card)
@@ -9,55 +10,50 @@ var suit := ""
 var is_wild := false
 var is_face_down := false
 var is_selected := false
+var is_interactable := true
 
+var card_size := Vector2(72, 104)
 var original_position := Vector2.ZERO
 
-var background: ColorRect
-var rank_label: Label
-var suit_label: Label
-var wild_label: Label
+var hit_area: Area2D
 var collision: CollisionShape2D
+var active_tween: Tween
+
+var card_white := Color("#FFFDF7")
+var cranberry := Color("#7A1E2C")
+var walnut := Color("#6B3F24")
+var walnut_dark := Color("#3B2114")
+var cream := Color("#F4E7D3")
+var gold := Color("#D8A441")
+var red_suit := Color("#B21E35")
+var black_suit := Color("#1E1A18")
+var shadow_color := Color(0, 0, 0, 0.25)
 
 func _ready():
-	input_pickable = true
+	create_hit_area()
+	queue_redraw()
 
-	background = ColorRect.new()
-	background.size = Vector2(72, 104)
-	background.color = Color.WHITE
-	add_child(background)
-
-	rank_label = Label.new()
-	rank_label.position = Vector2(8, 8)
-	rank_label.add_theme_font_size_override("font_size", 18)
-	add_child(rank_label)
-
-	suit_label = Label.new()
-	suit_label.position = Vector2(22, 34)
-	suit_label.add_theme_font_size_override("font_size", 32)
-	add_child(suit_label)
-
-	wild_label = Label.new()
-	wild_label.position = Vector2(10, 78)
-	wild_label.add_theme_font_size_override("font_size", 12)
-	add_child(wild_label)
+func create_hit_area():
+	hit_area = Area2D.new()
+	hit_area.input_pickable = true
+	add_child(hit_area)
 
 	collision = CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
-	shape.size = Vector2(72, 104)
+	shape.size = card_size
 	collision.shape = shape
-	collision.position = Vector2(36, 52)
-	add_child(collision)
+	collision.position = card_size / 2
+	hit_area.add_child(collision)
 
-	update_visual()
+	hit_area.input_event.connect(_on_input_event)
 
-func configure(data):
+func configure(data: Dictionary):
 	card_id = data.get("id", "")
 	rank = data.get("rank", "")
 	suit = data.get("suit", "")
 	is_wild = data.get("wild", false)
 	is_face_down = data.get("face_down", false)
-
-	update_visual()
+	queue_redraw()
 
 func set_card_face(new_rank: String, new_suit: String, wild: bool = false):
 	card_id = "%s%s" % [new_rank, new_suit]
@@ -65,65 +61,127 @@ func set_card_face(new_rank: String, new_suit: String, wild: bool = false):
 	suit = new_suit
 	is_wild = wild
 	is_face_down = false
-
-	update_visual()
+	queue_redraw()
 
 func set_card_back():
 	is_face_down = true
-	update_visual()
+	queue_redraw()
 
-func update_visual():
-	if background == null:
-		return
+func set_interactable(value: bool):
+	is_interactable = value
+	if hit_area != null:
+		hit_area.input_pickable = value
 
-	if is_face_down:
-		background.color = Color("#6B3F24")
-		rank_label.text = ""
-		suit_label.text = "◆"
-		suit_label.add_theme_color_override("font_color", Color("#F4E7D3"))
-		wild_label.text = ""
-		return
+	if not value:
+		is_selected = false
 
-	background.color = Color("#FFFDF7")
-	rank_label.text = rank
-	suit_label.text = suit
+	queue_redraw()
 
-	var suit_color := Color("#B21E35") if suit in ["♥", "♦"] else Color("#1E1A18")
+func move_to(target_position: Vector2, target_rotation: float, duration: float = 0.28, delay: float = 0.0):
+	if active_tween != null:
+		active_tween.kill()
 
-	rank_label.add_theme_color_override("font_color", suit_color)
-	suit_label.add_theme_color_override("font_color", suit_color)
+	original_position = target_position
 
-	if is_wild:
-		wild_label.text = "WILD"
-		wild_label.add_theme_color_override("font_color", Color("#D8A441"))
-	else:
-		wild_label.text = ""
+	active_tween = create_tween()
+	active_tween.set_trans(Tween.TRANS_CUBIC)
+	active_tween.set_ease(Tween.EASE_OUT)
+	active_tween.tween_property(self, "position", target_position, duration).set_delay(delay)
+	active_tween.parallel().tween_property(self, "rotation_degrees", target_rotation, duration).set_delay(delay)
+
+func fly_to(target_position: Vector2, target_rotation: float, duration: float = 0.35):
+	if active_tween != null:
+		active_tween.kill()
+
+	active_tween = create_tween()
+	active_tween.set_trans(Tween.TRANS_BACK)
+	active_tween.set_ease(Tween.EASE_OUT)
+	active_tween.tween_property(self, "position", target_position, duration)
+	active_tween.parallel().tween_property(self, "rotation_degrees", target_rotation, duration)
+	active_tween.parallel().tween_property(self, "scale", Vector2(1.04, 1.04), duration * 0.45)
+	active_tween.tween_property(self, "scale", Vector2.ONE, duration * 0.35)
 
 func select():
+	if not is_interactable:
+		return
+
 	if is_selected:
 		return
 
 	is_selected = true
 	original_position = position
-	position.y -= 22
+
+	if active_tween != null:
+		active_tween.kill()
+
+	active_tween = create_tween()
+	active_tween.set_trans(Tween.TRANS_BACK)
+	active_tween.set_ease(Tween.EASE_OUT)
+	active_tween.tween_property(self, "position:y", original_position.y - 24, 0.14)
 
 	selected.emit(self)
+	queue_redraw()
 
 func deselect():
 	if not is_selected:
 		return
 
 	is_selected = false
-	position = original_position
+
+	if active_tween != null:
+		active_tween.kill()
+
+	active_tween = create_tween()
+	active_tween.set_trans(Tween.TRANS_CUBIC)
+	active_tween.set_ease(Tween.EASE_OUT)
+	active_tween.tween_property(self, "position", original_position, 0.14)
 
 	deselected.emit(self)
+	queue_redraw()
 
 func force_deselect():
 	is_selected = false
+	queue_redraw()
 
-func _input_event(_viewport, event, _shape_idx):
+func _on_input_event(_viewport, event, _shape_idx):
+	if not is_interactable:
+		return
+
 	if event is InputEventMouseButton and event.pressed:
 		if is_selected:
 			deselect()
 		else:
 			select()
+
+func _draw():
+	var card_rect := Rect2(Vector2.ZERO, card_size)
+	var shadow_rect := Rect2(Vector2(4, 5), card_size)
+
+	draw_rect(shadow_rect, shadow_color, true)
+
+	if is_face_down:
+		draw_card_back(card_rect)
+	else:
+		draw_card_face(card_rect)
+
+	if is_selected:
+		draw_rect(Rect2(Vector2(-4, -4), card_size + Vector2(8, 8)), gold, false, 3)
+
+func draw_card_back(card_rect: Rect2):
+	draw_rect(card_rect, walnut, true)
+	draw_rect(card_rect, walnut_dark, false, 3)
+	draw_rect(Rect2(8, 8, 56, 88), cranberry, false, 2)
+	draw_string(ThemeDB.fallback_font, Vector2(26, 60), "◆", HORIZONTAL_ALIGNMENT_LEFT, -1, 34, cream)
+
+func draw_card_face(card_rect: Rect2):
+	draw_rect(card_rect, card_white, true)
+	draw_rect(card_rect, cranberry, false, 3)
+
+	var suit_color := red_suit if suit in ["♥", "♦"] else black_suit
+
+	draw_string(ThemeDB.fallback_font, Vector2(8, 24), rank, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, suit_color)
+	draw_string(ThemeDB.fallback_font, Vector2(24, 62), suit, HORIZONTAL_ALIGNMENT_LEFT, -1, 34, suit_color)
+
+	if is_wild:
+		draw_rect(Rect2(13, 80, 46, 16), cranberry, true)
+		draw_string(ThemeDB.fallback_font, Vector2(17, 93), "WILD", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, gold)

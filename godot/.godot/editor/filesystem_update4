@@ -1,2 +1,10 @@
 res://scenes/game_table.tscn
 res://scripts/GameTable.gd
+res://scripts/CardVisual.gd
+res://scenes/Deck.tscn
+res://scenes/Card.tscn
+res://scripts/ActionButtonVisual.gd
+res://scripts/MessageBannerVisual.gd
+res://scripts/DeckVisual.gd
+res://scripts/DiscardPileVisual.gd
+res://scripts/PlayerSeatVisual.gd
