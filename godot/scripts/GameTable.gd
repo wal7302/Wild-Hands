@@ -28,24 +28,27 @@ var message_banner: Node2D
 var draw_button: Button
 var discard_button: Button
 
-var hand_cards: Array = []
+var game_settings: Dictionary = {}
+var game_state := GameState.new()
+var card_deck := CardDeck.new()
+
+var hand_cards: Array[Node2D] = []
+var grace_hand_data: Array[Dictionary] = []
+var discard_cards: Array[Node2D] = []
+
 var selected_card: Node2D = null
 
 var discard_count := 0
 var has_drawn := false
-var draw_index := 0
 var is_animating := false
 
 var deal_rng := RandomNumberGenerator.new()
 
-var draw_cards := [
-	{"id": "8H", "rank": "8", "suit": "♥", "wild": false},
-	{"id": "3S", "rank": "3", "suit": "♠", "wild": true},
-	{"id": "QC", "rank": "Q", "suit": "♣", "wild": false}
-]
-
 func _ready():
 	deal_rng.randomize()
+
+	read_game_settings()
+	initialize_game_state()
 
 	build_environment()
 	build_title()
@@ -56,7 +59,29 @@ func _ready():
 	build_hand_marker()
 	build_message()
 	build_buttons()
+
 	deal_opening_hand()
+
+func read_game_settings():
+	if has_meta("game_settings"):
+		game_settings = get_meta("game_settings").duplicate(true)
+	else:
+		game_settings = {
+			"play_mode": "solo",
+			"game_type": "full",
+			"game_type_name": "Full Game"
+		}
+
+func initialize_game_state():
+	var game_type: String = String(
+		game_settings.get("game_type", "full")
+	)
+
+	var selected_mode: GameConfig.GameMode = (
+		GameConfig.mode_from_key(game_type)
+	)
+
+	game_state.initialize(selected_mode)
 
 func build_environment():
 	var room: Node2D = RoomBackgroundScene.instantiate()
@@ -67,7 +92,9 @@ func build_environment():
 	table.z_index = -50
 	add_child(table)
 
-	var ambient_effects: Node2D = AmbientEffectsScene.instantiate()
+	var ambient_effects: Node2D = (
+		AmbientEffectsScene.instantiate()
+	)
 	ambient_effects.z_index = 80
 	add_child(ambient_effects)
 
@@ -92,11 +119,22 @@ func build_hud():
 	game_hud.z_index = 95
 	add_child(game_hud)
 
+	refresh_hud("Your Turn")
+
+func refresh_hud(turn_text: String):
+	if game_hud == null:
+		return
+
 	game_hud.configure(
-		"Grace",
-		"Wild = 3",
-		"Round 1",
-		"Your Turn"
+		game_state.dealer_name(),
+		"Wild = " + game_state.wild_label(),
+		(
+			"Round "
+			+ str(game_state.current_round)
+			+ " of "
+			+ str(game_state.total_rounds)
+		),
+		turn_text
 	)
 
 func build_table_props():
@@ -136,10 +174,12 @@ func build_deck_and_discard():
 		14
 	)
 
-	var discard: Node2D = DiscardPileScene.instantiate()
-	discard.position = discard_position
-	discard.z_index = 2
-	add_child(discard)
+	var discard_slot: Node2D = (
+		DiscardPileScene.instantiate()
+	)
+	discard_slot.position = discard_position
+	discard_slot.z_index = 2
+	add_child(discard_slot)
 
 	add_label(
 		"Discard",
@@ -160,7 +200,9 @@ func build_hand_marker():
 	)
 
 	marker_shadow.size = Vector2(102, 22)
-	marker_shadow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	marker_shadow.horizontal_alignment = (
+		HORIZONTAL_ALIGNMENT_CENTER
+	)
 
 	var marker: Label = add_label(
 		"YOUR HAND",
@@ -170,7 +212,9 @@ func build_hand_marker():
 	)
 
 	marker.size = Vector2(102, 22)
-	marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	marker.horizontal_alignment = (
+		HORIZONTAL_ALIGNMENT_CENTER
+	)
 
 func build_message():
 	message_banner = MessageBannerScene.instantiate()
@@ -178,7 +222,7 @@ func build_message():
 	message_banner.z_index = 100
 	add_child(message_banner)
 
-	set_message("Grace deals one card at a time.")
+	set_message("Grace is shuffling the deck.")
 
 func build_buttons():
 	draw_button = ActionButtonScene.instantiate()
@@ -192,7 +236,9 @@ func build_buttons():
 	discard_button.text = "Discard"
 	discard_button.position = Vector2(221, 754)
 	discard_button.z_index = 110
-	discard_button.pressed.connect(discard_selected_card)
+	discard_button.pressed.connect(
+		discard_selected_card
+	)
 	add_child(discard_button)
 
 	update_action_buttons()
@@ -205,7 +251,10 @@ func set_turn_message(new_message: String):
 	if game_hud != null:
 		game_hud.set_turn_text(new_message)
 
-func set_button_available(button: Button, value: bool):
+func set_button_available(
+	button: Button,
+	value: bool
+):
 	if button == null:
 		return
 
@@ -228,9 +277,7 @@ func update_action_buttons():
 	)
 
 func set_hand_interactable(value: bool):
-	for card_node in hand_cards:
-		var card: Node2D = card_node
-
+	for card: Node2D in hand_cards:
 		if card.has_method("set_interactable"):
 			card.set_interactable(value)
 
@@ -244,36 +291,74 @@ func end_animation_lock():
 	set_hand_interactable(true)
 	update_action_buttons()
 
-func deal_opening_hand():
-	for child: Node in get_tree().get_nodes_in_group("hand_cards"):
-		child.queue_free()
+func clear_hand_cards():
+	for card: Node2D in hand_cards:
+		if is_instance_valid(card):
+			card.queue_free()
 
 	hand_cards.clear()
+
+func clear_discard_cards():
+	for card: Node2D in discard_cards:
+		if is_instance_valid(card):
+			card.queue_free()
+
+	discard_cards.clear()
+
+func deal_opening_hand():
+	clear_hand_cards()
+	clear_discard_cards()
+
+	grace_hand_data.clear()
 	selected_card = null
 	has_drawn = false
 	discard_count = 0
 
 	begin_animation_lock()
 
-	var cards: Array = [
-		{"id": "3H", "rank": "3", "suit": "♥", "wild": true},
-		{"id": "7C", "rank": "7", "suit": "♣", "wild": false},
-		{"id": "KD", "rank": "K", "suit": "♦", "wild": false}
-	]
+	card_deck.build(1)
+	card_deck.shuffle()
 
-	for i: int in range(cards.size()):
-		var card: Node2D = create_card(cards[i])
+	for card_number: int in range(
+		game_state.cards_dealt
+	):
+		var grace_card_data: Dictionary = (
+			card_deck.draw_card(game_state.wild_rank)
+		)
 
-		card.position = deck_position
-		card.rotation_degrees = deal_rng.randf_range(-8.0, -4.0)
+		grace_hand_data.append(grace_card_data)
 
-		add_child(card)
-		hand_cards.append(card)
+		var player_card_data: Dictionary = (
+			card_deck.draw_card(game_state.wild_rank)
+		)
 
+		var player_card: Node2D = create_card(
+			player_card_data
+		)
+
+		player_card.position = deck_position
+		player_card.rotation_degrees = (
+			deal_rng.randf_range(-8.0, -4.0)
+		)
+
+		add_child(player_card)
+		hand_cards.append(player_card)
+
+	create_opening_discard()
 	arrange_hand(0.46, true, true)
 
 	var total_deal_time: float = (
-		0.46 + (0.085 * float(cards.size() - 1)) + 0.12
+		0.46
+		+ (
+			0.045
+			* float(
+				maxi(
+					game_state.cards_dealt - 1,
+					0
+				)
+			)
+		)
+		+ 0.18
 	)
 
 	var deal_timer: Tween = create_tween()
@@ -281,9 +366,50 @@ func deal_opening_hand():
 
 	deal_timer.tween_callback(func():
 		end_animation_lock()
-		set_turn_message("Your Turn")
-		set_message("Draw a card to begin your turn.")
+		refresh_hud("Your Turn")
+
+		set_message(
+			game_state.mode_name
+			+ ": "
+			+ str(game_state.cards_dealt)
+			+ " cards dealt. "
+			+ GameConfig.wild_display_name(
+				game_state.wild_rank
+			)
+			+ " are wild."
+		)
 	)
+
+func create_opening_discard():
+	var discard_data: Dictionary = card_deck.draw_card(
+		game_state.wild_rank
+	)
+
+	if discard_data.is_empty():
+		return
+
+	var discard_card: Node2D = create_card(
+		discard_data,
+		false
+	)
+
+	discard_card.position = deck_position
+	discard_card.z_index = 20
+
+	if discard_card.has_method("set_interactable"):
+		discard_card.set_interactable(false)
+
+	add_child(discard_card)
+	discard_cards.append(discard_card)
+
+	if discard_card.has_method("fly_to"):
+		discard_card.fly_to(
+			discard_position,
+			deal_rng.randf_range(-3.0, 3.0),
+			0.40
+		)
+	else:
+		discard_card.position = discard_position
 
 func draw_card():
 	if is_animating:
@@ -291,6 +417,16 @@ func draw_card():
 
 	if has_drawn:
 		set_message("Discard before drawing again.")
+		return
+
+	var data: Dictionary = card_deck.draw_card(
+		game_state.wild_rank
+	)
+
+	if data.is_empty():
+		set_message(
+			"The draw pile is empty."
+		)
 		return
 
 	begin_animation_lock()
@@ -301,16 +437,12 @@ func draw_card():
 	):
 		deck_visual.animate_draw()
 
-	var data: Dictionary = draw_cards[
-		draw_index % draw_cards.size()
-	]
-
-	draw_index += 1
-
 	var card: Node2D = create_card(data)
 
 	card.position = deck_position
-	card.rotation_degrees = deal_rng.randf_range(-10.0, -5.0)
+	card.rotation_degrees = (
+		deal_rng.randf_range(-10.0, -5.0)
+	)
 
 	add_child(card)
 	hand_cards.append(card)
@@ -326,11 +458,13 @@ func draw_card():
 
 		set_message(
 			"You drew a wild."
-			if data["wild"]
+			if bool(data["wild"])
 			else "Choose a card to discard."
 		)
 
-		set_turn_message("Choose a card to discard")
+		set_turn_message(
+			"Choose a card to discard"
+		)
 	)
 
 func discard_selected_card():
@@ -359,16 +493,19 @@ func discard_selected_card():
 		card.set_interactable(false)
 
 	card.remove_from_group("hand_cards")
-	card.z_index = 20 + discard_count
+	card.z_index = 21 + discard_count
 
 	var settle_offset := Vector2(
 		deal_rng.randf_range(-2.5, 2.5),
 		deal_rng.randf_range(-1.5, 2.5)
 	)
 
-	var settle_rotation: float = deal_rng.randf_range(-5.0, 5.0)
+	var settle_rotation: float = (
+		deal_rng.randf_range(-5.0, 5.0)
+	)
 
 	discard_count += 1
+	discard_cards.append(card)
 
 	if card.has_method("fly_to"):
 		card.fly_to(
@@ -382,9 +519,13 @@ func discard_selected_card():
 
 	discard_timer.tween_callback(func():
 		if card.is_wild:
-			set_message("...Honey. You discarded a wild.")
+			set_message(
+				"...Honey. You discarded a wild."
+			)
 		else:
-			set_message("Card discarded. Grace is thinking.")
+			set_message(
+				"Card discarded. Grace is thinking."
+			)
 
 		set_turn_message("Grace is thinking...")
 		has_drawn = false
@@ -409,51 +550,60 @@ func arrange_hand(
 	if count == 0:
 		return
 
-	var spacing: float = 88.0
+	var spacing: float = get_hand_spacing(count)
 
-	if count > 3:
-		spacing = 76.0
+	var total_width: float = (
+		spacing * float(count - 1)
+	)
 
-	if count > 5:
-		spacing = 62.0
+	var start_x: float = (
+		hand_position.x - total_width / 2.0
+	)
 
-	var total_width: float = spacing * float(count - 1)
-	var start_x: float = hand_position.x - total_width / 2.0
-	var center_index: float = float(count - 1) / 2.0
+	var center_index: float = (
+		float(count - 1) / 2.0
+	)
 
 	for i: int in range(count):
 		var card: Node2D = hand_cards[i]
 		var card_index: float = float(i)
+
 		var distance_from_center: float = abs(
 			card_index - center_index
 		)
 
-		var curve_offset: float = distance_from_center * 9.0
-		var target_x: float = start_x + card_index * spacing
+		var curve_offset: float = (
+			distance_from_center
+			* get_curve_amount(count)
+		)
 
 		var target := Vector2(
-			target_x,
+			start_x + card_index * spacing,
 			hand_position.y + curve_offset
 		)
 
 		var rotation: float = (
-			(card_index - center_index) * 8.5
+			(card_index - center_index)
+			* get_rotation_amount(count)
 		)
 
 		var delay: float = (
-			0.085 * card_index
+			0.045 * card_index
 			if stagger
 			else 0.0
 		)
 
 		var deal_variation := Vector2(
-			deal_rng.randf_range(-4.0, 4.0),
-			deal_rng.randf_range(-2.0, 3.0)
+			deal_rng.randf_range(-3.0, 3.0),
+			deal_rng.randf_range(-2.0, 2.0)
 		)
 
 		card.z_index = 10 + i
 
-		if use_deal_animation and card.has_method("deal_to"):
+		if (
+			use_deal_animation
+			and card.has_method("deal_to")
+		):
 			card.deal_to(
 				target,
 				rotation,
@@ -469,13 +619,51 @@ func arrange_hand(
 				delay
 			)
 
-func create_card(data: Dictionary) -> Node2D:
+func get_hand_spacing(card_count: int) -> float:
+	if card_count <= 3:
+		return 88.0
+
+	if card_count <= 5:
+		return 68.0
+
+	if card_count <= 7:
+		return 49.0
+
+	if card_count <= 10:
+		return 34.0
+
+	return 25.0
+
+func get_curve_amount(card_count: int) -> float:
+	if card_count <= 5:
+		return 8.0
+
+	if card_count <= 9:
+		return 4.5
+
+	return 2.5
+
+func get_rotation_amount(card_count: int) -> float:
+	if card_count <= 5:
+		return 8.0
+
+	if card_count <= 9:
+		return 4.0
+
+	return 2.25
+
+func create_card(
+	data: Dictionary,
+	add_to_hand_group: bool = true
+) -> Node2D:
 	var card: Node2D = CardScene.instantiate()
 
 	card.configure(data)
-	card.add_to_group("hand_cards")
-	card.selected.connect(on_card_selected)
-	card.deselected.connect(on_card_deselected)
+
+	if add_to_hand_group:
+		card.add_to_group("hand_cards")
+		card.selected.connect(on_card_selected)
+		card.deselected.connect(on_card_deselected)
 
 	return card
 
@@ -483,7 +671,10 @@ func on_card_selected(card: Node2D):
 	if is_animating:
 		return
 
-	if selected_card != null and selected_card != card:
+	if (
+		selected_card != null
+		and selected_card != card
+	):
 		selected_card.deselect()
 
 	selected_card = card
@@ -517,7 +708,9 @@ func add_label(
 		color
 	)
 
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.mouse_filter = (
+		Control.MOUSE_FILTER_IGNORE
+	)
 
 	add_child(label)
 

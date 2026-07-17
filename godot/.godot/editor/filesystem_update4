@@ -5,3 +5,5 @@ res://scripts/GameTable.gd
 res://scripts/ActionButtonVisual.gd
 res://scripts/GameHudVisual.gd
 res://scripts/MessageBannerVisual.gd
+res://scripts/GameConfig.gd
+res://scripts/GameState.gd
