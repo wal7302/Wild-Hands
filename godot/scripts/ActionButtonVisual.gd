@@ -6,28 +6,39 @@ const HOVER_TEXTURE_PATH := "res://assets/ui/button_hover.png"
 const PRESSED_TEXTURE_PATH := "res://assets/ui/button_pressed.png"
 const DISABLED_TEXTURE_PATH := "res://assets/ui/button_disabled.png"
 
-var cranberry := Color("#7A1E2C")
-var cranberry_light := Color("#963047")
-var cranberry_dark := Color("#481019")
-var cream := Color("#FFF4DF")
-var gold := Color("#D8A441")
-var gold_light := Color("#F0CB74")
+var cranberry := Color("#741E2D")
+var cranberry_light := Color("#98384D")
+var cranberry_dark := Color("#3A0D16")
+
+var cream := Color("#FFF1D8")
+
+var gold := Color("#D7A63C")
+var gold_light := Color("#F4D47B")
+var gold_dark := Color("#875915")
+
+var walnut := Color("#32180E")
+var disabled_fill := Color("#685853")
+var disabled_border := Color("#9C8878")
 
 var motion_tween: Tween
 
+
 func _ready():
-	custom_minimum_size = Vector2(100, 52)
-	flat = false
+	custom_minimum_size = Vector2(112, 54)
 	focus_mode = Control.FOCUS_NONE
+	flat = false
 
 	add_theme_font_size_override("font_size", 18)
+	add_theme_constant_override("outline_size", 2)
 
 	add_theme_color_override("font_color", cream)
 	add_theme_color_override("font_hover_color", Color.WHITE)
 	add_theme_color_override("font_pressed_color", gold_light)
+	add_theme_color_override("font_outline_color", cranberry_dark)
+
 	add_theme_color_override(
 		"font_disabled_color",
-		Color("#D0BFB0")
+		Color("#D6C5B6")
 	)
 
 	apply_button_styles()
@@ -39,69 +50,80 @@ func _ready():
 
 	call_deferred("_configure_pivot")
 
+
 func set_available(value: bool):
 	disabled = not value
 
 	if disabled:
 		animate_scale(Vector2.ONE, 0.10)
-		modulate = Color(1, 1, 1, 0.72)
+		modulate = Color(0.78, 0.78, 0.78, 0.86)
 	else:
 		modulate = Color.WHITE
 
+
 func apply_button_styles():
-	if ResourceLoader.exists(NORMAL_TEXTURE_PATH):
-		add_theme_stylebox_override(
-			"normal",
-			make_texture_style(NORMAL_TEXTURE_PATH)
+	add_theme_stylebox_override(
+		"normal",
+		load_or_create_style(
+			NORMAL_TEXTURE_PATH,
+			cranberry,
+			gold,
+			4,
+			Vector2(2, 5)
 		)
-	else:
-		add_theme_stylebox_override(
-			"normal",
-			make_flat_style(cranberry, gold, 3, 5)
-		)
+	)
 
-	if ResourceLoader.exists(HOVER_TEXTURE_PATH):
-		add_theme_stylebox_override(
-			"hover",
-			make_texture_style(HOVER_TEXTURE_PATH)
+	add_theme_stylebox_override(
+		"hover",
+		load_or_create_style(
+			HOVER_TEXTURE_PATH,
+			cranberry_light,
+			gold_light,
+			5,
+			Vector2(2, 6)
 		)
-	else:
-		add_theme_stylebox_override(
-			"hover",
-			make_flat_style(
-				cranberry_light,
-				gold_light,
-				3,
-				7
-			)
-		)
+	)
 
-	if ResourceLoader.exists(PRESSED_TEXTURE_PATH):
-		add_theme_stylebox_override(
-			"pressed",
-			make_texture_style(PRESSED_TEXTURE_PATH)
+	add_theme_stylebox_override(
+		"pressed",
+		load_or_create_style(
+			PRESSED_TEXTURE_PATH,
+			cranberry_dark,
+			gold_dark,
+			2,
+			Vector2(1, 2)
 		)
-	else:
-		add_theme_stylebox_override(
-			"pressed",
-			make_flat_style(cranberry_dark, gold, 2, 2)
-		)
+	)
 
-	if ResourceLoader.exists(DISABLED_TEXTURE_PATH):
-		add_theme_stylebox_override(
-			"disabled",
-			make_texture_style(DISABLED_TEXTURE_PATH)
+	add_theme_stylebox_override(
+		"disabled",
+		load_or_create_style(
+			DISABLED_TEXTURE_PATH,
+			disabled_fill,
+			disabled_border,
+			2,
+			Vector2(1, 2)
 		)
-	else:
-		add_theme_stylebox_override(
-			"disabled",
-			make_flat_style(
-				Color("#76665F"),
-				Color("#9E8E82"),
-				2,
-				2
-			)
-		)
+	)
+
+
+func load_or_create_style(
+	texture_path: String,
+	bg_color: Color,
+	border_color: Color,
+	shadow_size: int,
+	shadow_offset: Vector2
+) -> StyleBox:
+	if ResourceLoader.exists(texture_path):
+		return make_texture_style(texture_path)
+
+	return make_production_flat_style(
+		bg_color,
+		border_color,
+		shadow_size,
+		shadow_offset
+	)
+
 
 func make_texture_style(texture_path: String) -> StyleBoxTexture:
 	var style := StyleBoxTexture.new()
@@ -109,44 +131,57 @@ func make_texture_style(texture_path: String) -> StyleBoxTexture:
 
 	style.texture = texture
 
-	style.texture_margin_left = 18.0
-	style.texture_margin_right = 18.0
-	style.texture_margin_top = 12.0
-	style.texture_margin_bottom = 12.0
+	style.texture_margin_left = 20.0
+	style.texture_margin_right = 20.0
+	style.texture_margin_top = 14.0
+	style.texture_margin_bottom = 14.0
 
-	style.content_margin_left = 14.0
-	style.content_margin_right = 14.0
-	style.content_margin_top = 9.0
-	style.content_margin_bottom = 9.0
+	style.content_margin_left = 16.0
+	style.content_margin_right = 16.0
+	style.content_margin_top = 10.0
+	style.content_margin_bottom = 10.0
 
 	return style
 
-func make_flat_style(
+
+func make_production_flat_style(
 	bg_color: Color,
 	border_color: Color,
-	border_width: int,
-	shadow_size: int
+	shadow_size: int,
+	shadow_offset: Vector2
 ) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 
 	style.bg_color = bg_color
 	style.border_color = border_color
-	style.set_border_width_all(border_width)
-	style.set_corner_radius_all(13)
 
-	style.shadow_color = Color(0, 0, 0, 0.3)
+	style.border_width_left = 4
+	style.border_width_right = 4
+	style.border_width_top = 3
+	style.border_width_bottom = 5
+
+	style.corner_radius_top_left = 14
+	style.corner_radius_top_right = 14
+	style.corner_radius_bottom_left = 14
+	style.corner_radius_bottom_right = 14
+
+	style.shadow_color = Color(0, 0, 0, 0.42)
 	style.shadow_size = shadow_size
-	style.shadow_offset = Vector2(2, 4)
+	style.shadow_offset = shadow_offset
 
-	style.content_margin_left = 14
-	style.content_margin_right = 14
-	style.content_margin_top = 9
-	style.content_margin_bottom = 9
+	style.content_margin_left = 16
+	style.content_margin_right = 16
+	style.content_margin_top = 10
+	style.content_margin_bottom = 12
+
+	style.anti_aliasing = true
 
 	return style
 
+
 func _configure_pivot():
 	pivot_offset = size / 2.0
+
 
 func animate_scale(
 	target_scale: Vector2,
@@ -166,23 +201,39 @@ func animate_scale(
 		duration
 	)
 
+
 func _on_mouse_entered():
 	if disabled:
 		return
 
-	animate_scale(Vector2(1.04, 1.04), 0.12)
+	animate_scale(
+		Vector2(1.035, 1.035),
+		0.12
+	)
+
 
 func _on_mouse_exited():
-	animate_scale(Vector2.ONE, 0.12)
+	animate_scale(
+		Vector2.ONE,
+		0.12
+	)
+
 
 func _on_button_down():
 	if disabled:
 		return
 
-	animate_scale(Vector2(0.96, 0.96), 0.08)
+	animate_scale(
+		Vector2(0.955, 0.955),
+		0.07
+	)
+
 
 func _on_button_up():
 	if disabled:
 		return
 
-	animate_scale(Vector2.ONE, 0.12)
+	animate_scale(
+		Vector2.ONE,
+		0.11
+	)

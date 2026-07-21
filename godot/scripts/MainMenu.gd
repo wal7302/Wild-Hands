@@ -40,12 +40,12 @@ func build_background():
 	upper_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(upper_glow)
 
-	var floor := ColorRect.new()
-	floor.color = walnut
-	floor.position = Vector2(0, 680)
-	floor.size = Vector2(390, 164)
-	floor.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(floor)
+	var floor_panel := ColorRect.new()
+	floor_panel.color = walnut
+	floor_panel.position = Vector2(0, 680)
+	floor_panel.size = Vector2(390, 164)
+	floor_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(floor_panel)
 
 	var vignette_left := ColorRect.new()
 	vignette_left.color = Color(0.12, 0.04, 0.02, 0.18)

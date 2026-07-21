@@ -18,6 +18,7 @@ var player_scores: Array[int] = [0, 0]
 
 var rng := RandomNumberGenerator.new()
 
+
 func initialize(selected_mode: GameConfig.GameMode):
 	rng.randomize()
 
@@ -38,8 +39,8 @@ func initialize(selected_mode: GameConfig.GameMode):
 
 	dealer_index = 0
 	current_player_index = 1
-
 	player_scores = [0, 0]
+
 
 func advance_round() -> bool:
 	if current_round >= total_rounds:
@@ -61,11 +62,36 @@ func advance_round() -> bool:
 
 	return true
 
+
+func add_round_scores(
+	player_score: int,
+	grace_score: int
+):
+	player_scores[0] += maxi(player_score, 0)
+	player_scores[1] += maxi(grace_score, 0)
+
+
+func is_game_over() -> bool:
+	return current_round >= total_rounds
+
+
+func winner_text() -> String:
+	if player_scores[0] < player_scores[1]:
+		return "You win the game!"
+
+	if player_scores[1] < player_scores[0]:
+		return "Grace wins the game."
+
+	return "The game ends in a tie."
+
+
 func wild_label() -> String:
 	return GameConfig.rank_label(wild_rank)
 
+
 func dealer_name() -> String:
 	return "Grace" if dealer_index == 0 else "You"
+
 
 func first_player_name() -> String:
 	return "You" if dealer_index == 0 else "Grace"
