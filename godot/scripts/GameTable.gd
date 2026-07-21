@@ -37,9 +37,9 @@ var walnut_dark := Color("#2B160D")
 var wild_marker: WildMarker
 var wild_reveal_sound: AudioStream
 
-var deck_position := Vector2(104, 344)
-var discard_position := Vector2(214, 344)
-var hand_position := Vector2(195, 570)
+var deck_position := Vector2(104, 305)
+var discard_position := Vector2(214, 305)
+var hand_position := Vector2(195, 515)
 
 var game_hud: Node2D
 var deck_visual: Node2D
@@ -206,7 +206,7 @@ func build_title():
 
 func build_hud():
 	game_hud = GameHudScene.instantiate()
-	game_hud.position = Vector2(20, 99)
+	game_hud.position = Vector2(20, 88)
 	game_hud.z_index = 95
 	add_child(game_hud)
 
@@ -251,13 +251,13 @@ func build_players():
 	add_player_seat(
 		"Grace",
 		"🍷",
-		Vector2(18, 168)
+		Vector2(18, 138)
 	)
 
 	add_player_seat(
 		"You",
 		"🃏",
-		Vector2(18, 516)
+		Vector2(18, 462)
 	)
 
 
@@ -386,34 +386,30 @@ func create_pile_tap_button(
 
 
 func build_hand_marker():
-	var marker_shadow: Label = add_label(
+	var shadow := add_label(
 		"YOUR HAND",
-		Vector2(145, 535),
+		Vector2(145, 475),
 		walnut_dark,
-		14
+		15
 	)
 
-	marker_shadow.size = Vector2(102, 22)
-	marker_shadow.horizontal_alignment = (
-		HORIZONTAL_ALIGNMENT_CENTER
-	)
+	shadow.size = Vector2(102, 22)
+	shadow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
-	var marker: Label = add_label(
+	var label := add_label(
 		"YOUR HAND",
-		Vector2(143, 533),
+		Vector2(143, 473),
 		gold,
-		14
+		15
 	)
 
-	marker.size = Vector2(102, 22)
-	marker.horizontal_alignment = (
-		HORIZONTAL_ALIGNMENT_CENTER
-	)
+	label.size = Vector2(102, 22)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
 func build_message():
 	message_banner = MessageBannerScene.instantiate()
-	message_banner.position = Vector2(35, 687)
+	message_banner.position = Vector2(35, 645)
 	message_banner.z_index = 100
 	add_child(message_banner)
 
@@ -421,22 +417,19 @@ func build_message():
 
 
 func build_buttons():
+
 	discard_button = ActionButtonScene.instantiate()
 	discard_button.text = "Discard"
-	discard_button.position = Vector2(76, 742)
+	discard_button.position = Vector2(76, 700)
 	discard_button.z_index = 110
-	discard_button.pressed.connect(
-		discard_selected_card
-	)
+	discard_button.pressed.connect(discard_selected_card)
 	add_child(discard_button)
 
 	go_out_button = ActionButtonScene.instantiate()
 	go_out_button.text = "Go Out"
-	go_out_button.position = Vector2(215, 742)
+	go_out_button.position = Vector2(215, 700)
 	go_out_button.z_index = 110
-	go_out_button.pressed.connect(
-		on_primary_button_pressed
-	)
+	go_out_button.pressed.connect(on_primary_button_pressed)
 	add_child(go_out_button)
 
 	update_action_buttons()
@@ -893,24 +886,25 @@ func deal_grace_card_to_position(
 	duration: float,
 	delay: float
 ):
-	var grace_card_width: float = 64.0
-	var screen_margin: float = 20.0
+	var card_scale: float = 0.64
+	var card_width: float = 82.0 * card_scale
+	var side_margin: float = 34.0
 
-	var available_width: float = (
+	var available_spacing_width: float = (
 		390.0
-		- screen_margin * 2.0
-		- grace_card_width
+		- side_margin * 2.0
+		- card_width
 	)
 
 	var spacing: float = minf(
-		38.0,
-		available_width
+		31.0,
+		available_spacing_width
 		/ float(maxi(card_count - 1, 1))
 	)
 
 	var total_width: float = (
 		spacing * float(card_count - 1)
-		+ grace_card_width
+		+ card_width
 	)
 
 	var start_x: float = (
@@ -921,20 +915,29 @@ func deal_grace_card_to_position(
 		float(card_count - 1) / 2.0
 	)
 
-	var distance_from_center: float = abs(
+	var distance_from_center: float = absf(
 		float(card_index) - center_index
 	)
 
-	var target := Vector2(
+	var target: Vector2 = Vector2(
 		start_x + float(card_index) * spacing,
-		205.0 + distance_from_center * 2.0
+		177.0 + distance_from_center * 1.0
 	)
+
+	var rotation_amount: float = 3.2
+
+	if card_count > 7:
+		rotation_amount = 2.1
+
+	if card_count > 10:
+		rotation_amount = 1.4
 
 	var rotation: float = (
 		(float(card_index) - center_index)
-		* get_grace_rotation_amount(card_count)
+		* rotation_amount
 	)
 
+	card.scale = Vector2(card_scale, card_scale)
 	card.z_index = 30 + card_index
 
 	if card.has_method("deal_to"):
@@ -943,10 +946,7 @@ func deal_grace_card_to_position(
 			rotation,
 			duration,
 			delay,
-			Vector2(
-				deal_rng.randf_range(-2.0, 2.0),
-				deal_rng.randf_range(-1.0, 1.0)
-			)
+			Vector2.ZERO
 		)
 	else:
 		card.position = target
@@ -1546,18 +1546,19 @@ func arrange_grace_hidden_hand(
 	if count == 0:
 		return
 
-	var card_width: float = 64.0
-	var screen_margin: float = 20.0
+	var card_scale: float = 0.64
+	var card_width: float = 82.0 * card_scale
+	var side_margin: float = 34.0
 
-	var available_width: float = (
+	var available_spacing_width: float = (
 		390.0
-		- screen_margin * 2.0
+		- side_margin * 2.0
 		- card_width
 	)
 
 	var spacing: float = minf(
-		38.0,
-		available_width
+		31.0,
+		available_spacing_width
 		/ float(maxi(count - 1, 1))
 	)
 
@@ -1574,32 +1575,42 @@ func arrange_grace_hidden_hand(
 		float(count - 1) / 2.0
 	)
 
+	var rotation_amount: float = 3.2
+
+	if count > 7:
+		rotation_amount = 2.1
+
+	if count > 10:
+		rotation_amount = 1.4
+
 	for i: int in range(count):
 		var card: Node2D = grace_hand_cards[i]
 
 		if not is_instance_valid(card):
 			continue
 
-		var distance_from_center: float = abs(
-			float(i) - center_index
+		var card_index: float = float(i)
+
+		var distance_from_center: float = absf(
+			card_index - center_index
 		)
 
-		var target := Vector2(
-			start_x + float(i) * spacing,
-			205.0 + distance_from_center * 2.0
+		var target: Vector2 = Vector2(
+			start_x + card_index * spacing,
+			177.0 + distance_from_center * 1.0
 		)
 
 		var rotation: float = (
-			(float(i) - center_index)
-			* get_grace_rotation_amount(count)
+			(card_index - center_index)
+			* rotation_amount
 		)
 
-		var delay: float = (
-			0.035 * float(i)
-			if stagger
-			else 0.0
-		)
+		var card_delay: float = 0.0
 
+		if stagger:
+			card_delay = card_index * 0.03
+
+		card.scale = Vector2(card_scale, card_scale)
 		card.z_index = 30 + i
 
 		if card.has_method("move_to"):
@@ -1607,7 +1618,7 @@ func arrange_grace_hidden_hand(
 				target,
 				rotation,
 				duration,
-				delay
+				card_delay
 			)
 		else:
 			card.position = target
@@ -2311,8 +2322,31 @@ func arrange_hand(
 	if count == 0:
 		return
 
-	var spacing: float = get_hand_spacing(count)
-	var card_width: float = 82.0
+	var card_scale: float = 1.0
+
+	if count >= 8:
+		card_scale = 0.92
+
+	if count >= 10:
+		card_scale = 0.84
+
+	if count >= 12:
+		card_scale = 0.78
+
+	var card_width: float = 82.0 * card_scale
+	var side_margin: float = 22.0
+
+	var available_spacing_width: float = (
+		390.0
+		- side_margin * 2.0
+		- card_width
+	)
+
+	var spacing: float = minf(
+		get_hand_spacing(count),
+		available_spacing_width
+		/ float(maxi(count - 1, 1))
+	)
 
 	var total_width: float = (
 		spacing * float(count - 1)
@@ -2327,40 +2361,59 @@ func arrange_hand(
 		float(count - 1) / 2.0
 	)
 
+	var rotation_amount: float = 4.0
+
+	if count > 7:
+		rotation_amount = 2.6
+
+	if count > 10:
+		rotation_amount = 1.8
+
 	for i: int in range(count):
 		var card: Node2D = player_hand.cards[i]
 		var card_index: float = float(i)
 
-		var distance_from_center: float = abs(
+		if not is_instance_valid(card):
+			continue
+
+		var distance_from_center: float = absf(
 			card_index - center_index
 		)
 
+		var curve_amount: float = 7.0
+
+		if count > 7:
+			curve_amount = 4.0
+
+		if count > 10:
+			curve_amount = 2.2
+
 		var curve_offset: float = (
 			distance_from_center
-			* get_curve_amount(count)
+			* curve_amount
 		)
 
-		var target := Vector2(
+		var target: Vector2 = Vector2(
 			start_x + card_index * spacing,
 			hand_position.y + curve_offset
 		)
 
 		var rotation: float = (
 			(card_index - center_index)
-			* get_grace_rotation_amount(count)
+			* rotation_amount
 		)
 
-		var delay: float = (
-			0.045 * card_index
-			if stagger
-			else 0.0
-		)
+		var card_delay: float = 0.0
 
-		var deal_variation := Vector2(
+		if stagger:
+			card_delay = card_index * 0.045
+
+		var deal_variation: Vector2 = Vector2(
 			deal_rng.randf_range(-3.0, 3.0),
 			deal_rng.randf_range(-2.0, 2.0)
 		)
 
+		card.scale = Vector2(card_scale, card_scale)
 		card.z_index = 10 + i
 
 		if (
@@ -2371,7 +2424,7 @@ func arrange_hand(
 				target,
 				rotation,
 				duration,
-				delay,
+				card_delay,
 				deal_variation
 			)
 		elif card.has_method("move_to"):
@@ -2379,8 +2432,11 @@ func arrange_hand(
 				target,
 				rotation,
 				duration,
-				delay
+				card_delay
 			)
+		else:
+			card.position = target
+			card.rotation_degrees = rotation
 
 
 func get_hand_spacing(
