@@ -37,9 +37,40 @@ var walnut_dark := Color("#2B160D")
 var wild_marker: WildMarker
 var wild_reveal_sound: AudioStream
 
-var deck_position := Vector2(104, 284)
-var discard_position := Vector2(214, 284)
-var hand_position := Vector2(195, 495)
+const TABLE_WIDTH: float = 390.0
+
+# --------------------------------------------------------------------
+# PRODUCTION LAYOUT (matches reference artwork)
+# --------------------------------------------------------------------
+
+const TABLE_WIDTH := 390.0
+
+const TITLE_Y := 14.0
+const HUD_Y := 92.0
+
+const GRACE_SEAT_POSITION := Vector2(18.0, 180.0)
+const GRACE_HAND_Y := 285.0
+
+const WILD_MARKER_POSITION := Vector2(195.0, 340.0)
+
+const DECK_POSITION := Vector2(110.0, 410.0)
+const DISCARD_POSITION := Vector2(220.0, 410.0)
+
+const PLAYER_SEAT_POSITION := Vector2(18.0, 710.0)
+const PLAYER_HAND_Y := 790.0
+const PLAYER_HAND_LABEL_Y := 770.0
+
+const MESSAGE_POSITION := Vector2(25.0, 885.0)
+
+const BUTTON_Y := 940.0
+
+var deck_position: Vector2 = DECK_POSITION
+var discard_position: Vector2 = DISCARD_POSITION
+var hand_position: Vector2 = Vector2(
+	TABLE_WIDTH / 2.0,
+	PLAYER_HAND_Y
+)
+
 
 var game_hud: Node2D
 var deck_visual: Node2D
@@ -247,17 +278,17 @@ func build_table_props():
 	add_child(table_props)
 
 
-func build_players():
+func build_players() -> void:
 	add_player_seat(
 		"Grace",
 		"🍷",
-		Vector2(18, 138)
+		GRACE_SEAT_POSITION
 	)
 
 	add_player_seat(
 		"You",
 		"🃏",
-		Vector2(18, 462)
+		PLAYER_SEAT_POSITION
 	)
 
 
@@ -283,6 +314,7 @@ func add_player_seat(
 func build_deck_and_discard():
 	deck_visual = DeckScene.instantiate()
 	deck_visual.position = deck_position
+	deck_visual.rotation_degrees = -3.0
 	deck_visual.z_index = 2
 	add_child(deck_visual)
 
@@ -301,6 +333,7 @@ func build_deck_and_discard():
 	)
 
 	discard_slot.position = discard_position
+	discard_slot.rotation_degrees = 2.0
 	discard_slot.z_index = 2
 	add_child(discard_slot)
 
@@ -385,54 +418,69 @@ func create_pile_tap_button(
 	return button
 
 
-func build_hand_marker():
+func build_hand_marker() -> void:
 	var marker_shadow: Label = add_label(
 		"YOUR HAND",
-		Vector2(145, 455),
+		Vector2(
+			145.0,
+			PLAYER_HAND_LABEL_Y + 2.0
+		),
 		walnut_dark,
 		14
 	)
 
-	marker_shadow.size = Vector2(102, 22)
+	marker_shadow.size = Vector2(102.0, 22.0)
 	marker_shadow.horizontal_alignment = (
 		HORIZONTAL_ALIGNMENT_CENTER
 	)
 
 	var marker: Label = add_label(
 		"YOUR HAND",
-		Vector2(143, 453),
+		Vector2(
+			143.0,
+			PLAYER_HAND_LABEL_Y
+		),
 		gold,
 		14
 	)
 
-	marker.size = Vector2(102, 22)
+	marker.size = Vector2(102.0, 22.0)
 	marker.horizontal_alignment = (
 		HORIZONTAL_ALIGNMENT_CENTER
 	)
 
-func build_message():
+func build_message() -> void:
 	message_banner = MessageBannerScene.instantiate()
-	message_banner.position = Vector2(35, 645)
+	message_banner.position = MESSAGE_POSITION
 	message_banner.z_index = 100
 	add_child(message_banner)
 
 	set_message("Grace is shuffling the deck.")
 
 
-func build_buttons():
-
+func build_buttons() -> void:
 	discard_button = ActionButtonScene.instantiate()
 	discard_button.text = "Discard"
-	discard_button.position = Vector2(76, 700)
+	discard_button.position = Vector2(
+		76.0,
+		BUTTON_Y
+	)
 	discard_button.z_index = 110
-	discard_button.pressed.connect(discard_selected_card)
+	discard_button.pressed.connect(
+		discard_selected_card
+	)
 	add_child(discard_button)
 
 	go_out_button = ActionButtonScene.instantiate()
 	go_out_button.text = "Go Out"
-	go_out_button.position = Vector2(215, 700)
+	go_out_button.position = Vector2(
+		215.0,
+		BUTTON_Y
+	)
 	go_out_button.z_index = 110
-	go_out_button.pressed.connect(on_primary_button_pressed)
+	go_out_button.pressed.connect(
+		on_primary_button_pressed
+	)
 	add_child(go_out_button)
 
 	update_action_buttons()
@@ -888,16 +936,14 @@ func deal_grace_card_to_position(
 	card_count: int,
 	duration: float,
 	delay: float
-):
+) -> void:
 	var card_scale: float = 0.64
 	var card_width: float = 82.0 * card_scale
-	var left_margin: float = 24.0
-	var right_margin: float = 62.0
+	var side_margin: float = 26.0
 
 	var available_spacing_width: float = (
-		390.0
-		- left_margin
-		- right_margin
+		TABLE_WIDTH
+		- side_margin * 2.0
 		- card_width
 	)
 
@@ -912,18 +958,9 @@ func deal_grace_card_to_position(
 		+ card_width
 	)
 
-	var start_x: float = left_margin
-
-	if total_width < available_spacing_width + card_width:
-		start_x = (
-			left_margin
-			+ (
-				available_spacing_width
-				+ card_width
-				- total_width
-			) / 2.0
-			- 16.0
-		)
+	var start_x: float = (
+		TABLE_WIDTH - total_width
+	) / 2.0
 
 	var center_index: float = (
 		float(card_count - 1) / 2.0
@@ -935,16 +972,17 @@ func deal_grace_card_to_position(
 
 	var target: Vector2 = Vector2(
 		start_x + float(card_index) * spacing,
-		169.0 + distance_from_center * 0.9
+		GRACE_HAND_Y
+		+ distance_from_center * 1.0
 	)
 
-	var rotation_amount: float = 3.2
+	var rotation_amount: float = 3.0
 
 	if card_count > 7:
-		rotation_amount = 2.1
+		rotation_amount = 2.0
 
 	if card_count > 10:
-		rotation_amount = 1.4
+		rotation_amount = 1.3
 
 	var rotation: float = (
 		(float(card_index) - center_index)
@@ -1554,7 +1592,7 @@ func add_grace_draw_visual(
 func arrange_grace_hidden_hand(
 	duration: float = 0.30,
 	stagger: bool = false
-):
+) -> void:
 	var count: int = grace_hand_cards.size()
 
 	if count == 0:
@@ -1562,13 +1600,11 @@ func arrange_grace_hidden_hand(
 
 	var card_scale: float = 0.64
 	var card_width: float = 82.0 * card_scale
-	var left_margin: float = 24.0
-	var right_margin: float = 62.0
+	var side_margin: float = 26.0
 
 	var available_spacing_width: float = (
-		390.0
-		- left_margin
-		- right_margin
+		TABLE_WIDTH
+		- side_margin * 2.0
 		- card_width
 	)
 
@@ -1583,30 +1619,21 @@ func arrange_grace_hidden_hand(
 		+ card_width
 	)
 
-	var start_x: float = left_margin
-
-	if total_width < available_spacing_width + card_width:
-		start_x = (
-			left_margin
-			+ (
-				available_spacing_width
-				+ card_width
-				- total_width
-			) / 2.0
-			- 16.0
-		)
+	var start_x: float = (
+		TABLE_WIDTH - total_width
+	) / 2.0
 
 	var center_index: float = (
 		float(count - 1) / 2.0
 	)
 
-	var rotation_amount: float = 3.2
+	var rotation_amount: float = 3.0
 
 	if count > 7:
-		rotation_amount = 2.1
+		rotation_amount = 2.0
 
 	if count > 10:
-		rotation_amount = 1.4
+		rotation_amount = 1.3
 
 	for i: int in range(count):
 		var card: Node2D = grace_hand_cards[i]
@@ -1622,7 +1649,8 @@ func arrange_grace_hidden_hand(
 
 		var target: Vector2 = Vector2(
 			start_x + card_index * spacing,
-			169.0 + distance_from_center * 0.9
+			GRACE_HAND_Y
+			+ distance_from_center * 1.0
 		)
 
 		var rotation: float = (
@@ -2341,7 +2369,7 @@ func arrange_hand(
 	duration: float = 0.28,
 	stagger: bool = false,
 	use_deal_animation: bool = false
-):
+) -> void:
 	var count: int = player_hand.size()
 
 	if count == 0:
@@ -2349,20 +2377,20 @@ func arrange_hand(
 
 	var card_scale: float = 1.0
 
-	if count >= 8:
+	if count >= 7:
 		card_scale = 0.92
 
-	if count >= 10:
+	if count >= 9:
 		card_scale = 0.84
 
-	if count >= 12:
-		card_scale = 0.78
+	if count >= 11:
+		card_scale = 0.76
 
 	var card_width: float = 82.0 * card_scale
-	var side_margin: float = 22.0
+	var side_margin: float = 27.0
 
 	var available_spacing_width: float = (
-		390.0
+		TABLE_WIDTH
 		- side_margin * 2.0
 		- card_width
 	)
@@ -2379,7 +2407,7 @@ func arrange_hand(
 	)
 
 	var start_x: float = (
-		390.0 - total_width
+		TABLE_WIDTH - total_width
 	) / 2.0
 
 	var center_index: float = (
@@ -2387,31 +2415,27 @@ func arrange_hand(
 	)
 
 	var rotation_amount: float = 4.0
+	var curve_amount: float = 6.0
 
 	if count > 7:
-		rotation_amount = 2.6
+		rotation_amount = 2.4
+		curve_amount = 3.5
 
 	if count > 10:
-		rotation_amount = 1.8
+		rotation_amount = 1.6
+		curve_amount = 2.0
 
 	for i: int in range(count):
 		var card: Node2D = player_hand.cards[i]
-		var card_index: float = float(i)
 
 		if not is_instance_valid(card):
 			continue
 
+		var card_index: float = float(i)
+
 		var distance_from_center: float = absf(
 			card_index - center_index
 		)
-
-		var curve_amount: float = 7.0
-
-		if count > 7:
-			curve_amount = 4.0
-
-		if count > 10:
-			curve_amount = 2.2
 
 		var curve_offset: float = (
 			distance_from_center
@@ -2420,7 +2444,7 @@ func arrange_hand(
 
 		var target: Vector2 = Vector2(
 			start_x + card_index * spacing,
-			hand_position.y + curve_offset
+			PLAYER_HAND_Y + curve_offset
 		)
 
 		var rotation: float = (

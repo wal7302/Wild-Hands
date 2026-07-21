@@ -5,8 +5,8 @@
 wild_reveal.wav::AudioStreamWAV::8548007570317990604::1784411613::1784412555::1::::<><><>0<>0<>f254fb043f6b0198e3408dcf1a1a1b46<>res://.godot/imported/wild_reveal.wav-8150685f0ba1467037205352325445b8.sample::
 ::res://assets/background/::1783891773
 ::res://assets/cards/::1784617789
-::res://assets/cards/backs/::1784617887
-card_back.png::CompressedTexture2D::612431621775655306::1784617654::1784617887::1::::<><><>0<>0<>82aa422104858f08fafb4418a05583fa<>res://.godot/imported/card_back.png-d301a8642020d7df3e623afcfdb7d37b.ctex::
+::res://assets/cards/backs/::1784629377
+card_back.png::CompressedTexture2D::612431621775655306::1784629331::1784629382::1::::<><><>0<>0<>82aa422104858f08fafb4418a05583fa<>res://.godot/imported/card_back.png-d301a8642020d7df3e623afcfdb7d37b.ctex::
 ::res://assets/cards/faces/::1783813179
 ::res://assets/characters/::1783891784
 ::res://assets/effects/::1783891882
@@ -57,11 +57,11 @@ GameAudio.gd::GDScript::3716243554673825093::1783166064::0::1::::GameAudio<>Node
 GameButton.gd::GDScript::4646083256670361189::1783166064::0::1::::GameButton<>Button<><>0<>0<><>::
 GameConfig.gd::GDScript::7207804915625072923::1784246213::0::1::::GameConfig<>RefCounted<><>0<>0<><>::
 GameDirector.gd::GDScript::8458972612940070587::1783166064::0::1::::<>Node2D<><>0<>0<><>::
-GameHudVisual.gd::GDScript::279866872720818381::1784616665::0::1::::GameHudVisual<>Node2D<><>0<>0<><>::
+GameHudVisual.gd::GDScript::279866872720818381::1784625076::0::1::::GameHudVisual<>Node2D<><>0<>0<><>::
 GameMessage.gd::GDScript::8189874506606995156::1783166064::0::1::::GameMessage<>Label<><>0<>0<><>::
 GameSetup.gd::GDScript::677956268308141573::1784242495::0::1::::<>Control<><>0<>0<><>::
 GameState.gd::GDScript::8004930135654403681::1784346706::0::1::::GameState<>RefCounted<><>0<>0<><>::
-GameTable.gd::GDScript::985265838494848536::1784621809::0::1::::<>Node2D<><>0<>0<><>::
+GameTable.gd::GDScript::985265838494848536::1784628914::0::1::::<>Node2D<><>0<>0<><>::
 GraceAI.gd::GDScript::1737045353500434558::1784347235::0::1::::GraceAI<>RefCounted<><>0<>0<><>::
 GraceReaction.gd::GDScript::1704832399419421406::1783166064::0::1::::GraceReaction<>Node2D<><>0<>0<><>::
 Hand.gd::GDScript::1146076982215892167::1784254663::0::1::::Hand<>RefCounted<><>0<>0<><>::
@@ -72,8 +72,8 @@ MainMenu.gd::GDScript::7669861441932409367::1784417287::0::1::::<>Control<><>0<>
 MeldAnalyzer.gd::GDScript::3605191578879375489::1784254207::0::1::::MeldAnalyzer<>RefCounted<><>0<>0<><>::
 MessageBannerVisual.gd::GDScript::4746306187281696035::1784616745::0::1::::MessageBannerVisual<>Node2D<><>0<>0<><>::
 PlayerHand.gd::GDScript::1867696130809506433::1784613688::0::1::::PlayerHand<>Node2D<><>0<>0<><>::
-PlayerSeatVisual.gd::GDScript::967761706286830048::1784616689::0::1::::PlayerSeatVisual<>Node2D<><>0<>0<><>::
-RoomBackgroundVisual.gd::GDScript::7848964430026228396::1784619815::0::1::::RoomBackgroundVisual<>Node2D<><>0<>0<><>::
+PlayerSeatVisual.gd::GDScript::967761706286830048::1784625114::0::1::::PlayerSeatVisual<>Node2D<><>0<>0<><>::
+RoomBackgroundVisual.gd::GDScript::7848964430026228396::1784629060::0::1::::RoomBackgroundVisual<>Node2D<><>0<>0<><>::
 ScoreCalculator.gd::GDScript::2701335306511986841::1784346803::0::1::::ScoreCalculator<>RefCounted<><>0<>0<><>::
 ScoreScreen.gd::GDScript::8834408137338714962::1784242284::0::1::::<>RefCounted<><>0<>0<><>::
 TableAnimationDirector.gd::GDScript::503809272903268886::1783166064::0::1::::TableAnimationDirector<>Node<><>0<>0<><>::

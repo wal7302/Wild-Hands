@@ -14,10 +14,10 @@ func _ready():
 	queue_redraw()
 
 func _draw():
-	draw_wine_glass(Vector2(64, 258))
-	draw_cookie_plate(Vector2(314, 258))
-	draw_reading_glasses(Vector2(55, 463))
-	draw_score_pad(Vector2(285, 465))
+	draw_wine_glass(Vector2(64, 285))
+	draw_cookie_plate(Vector2(314, 285))
+	draw_reading_glasses(Vector2(55, 488))
+	draw_score_pad(Vector2(295, 485))
 
 func draw_wine_glass(origin: Vector2):
 	draw_ellipse_shadow(origin + Vector2(0, 24), Vector2(20, 7))

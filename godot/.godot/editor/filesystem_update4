@@ -1,1 +1,6 @@
 res://scripts/GameTable.gd
+res://scripts/GameHudVisual.gd
+res://scripts/PlayerSeatVisual.gd
+res://scripts/RoomBackgroundVisual.gd
+res://scripts/TablePropVisual.gd
+res://scripts/ActionButtonVisual.gd
