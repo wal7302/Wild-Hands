@@ -27,6 +27,9 @@ var hit_area: Area2D
 var collision: CollisionShape2D
 var active_tween: Tween
 
+var selection_glow_phase: float = 0.0
+var selection_glow_strength: float = 0.0
+
 var face_texture: Texture2D
 var back_texture: Texture2D
 var wild_badge_texture: Texture2D
@@ -51,11 +54,39 @@ var edge_dark := Color("#2E1715")
 var inner_edge := Color(0.42, 0.20, 0.13, 0.24)
 
 
-func _ready():
+func _ready() -> void:
 	create_hit_area()
 	load_shared_textures()
 	load_face_texture()
+
+	set_process(true)
+
 	queue_redraw()
+
+
+func _process(delta: float) -> void:
+	var target_strength: float = (
+		1.0
+		if is_selected
+		else 0.0
+	)
+
+	selection_glow_strength = move_toward(
+		selection_glow_strength,
+		target_strength,
+		delta * 7.0
+	)
+
+	if selection_glow_strength > 0.001:
+		selection_glow_phase = fmod(
+			selection_glow_phase + delta * 2.6,
+			TAU
+		)
+
+		queue_redraw()
+	elif selection_glow_strength != 0.0:
+		selection_glow_strength = 0.0
+		queue_redraw()
 
 
 func create_hit_area():
@@ -239,12 +270,19 @@ func select():
 	if not is_interactable or is_selected:
 		return
 
+	# Capture the card's current resting location before lifting it.
+	original_position = position
+	original_rotation = rotation_degrees
+
 	is_selected = true
 	z_index += 50
 
 	kill_active_tween()
 
-	var selected_position := original_position + Vector2(0, -32)
+	var selected_position: Vector2 = (
+		original_position
+		+ Vector2(0.0, -32.0)
+	)
 
 	active_tween = CardAnimator.select_card(
 		self,
@@ -403,51 +441,138 @@ func draw_outer_card_frame():
 	)
 
 
-func draw_selection_glow():
-	var glow_style := StyleBoxFlat.new()
+func draw_selection_glow() -> void:
+	var pulse_amount: float = (
+		0.5
+		+ sin(selection_glow_phase) * 0.5
+	)
 
-	glow_style.bg_color = Color(gold_light, 0.10)
-	glow_style.border_color = Color(gold_light, 0.20)
-	glow_style.set_border_width_all(5)
-	glow_style.set_corner_radius_all(15)
+	var glow_alpha: float = lerpf(
+		0.08,
+		0.17,
+		pulse_amount
+	) * selection_glow_strength
+
+	var border_alpha: float = lerpf(
+		0.18,
+		0.34,
+		pulse_amount
+	) * selection_glow_strength
+
+	var glow_expansion: float = lerpf(
+		7.0,
+		11.0,
+		pulse_amount
+	)
+
+	var outer_glow := StyleBoxFlat.new()
+
+	outer_glow.bg_color = Color(
+		gold_light,
+		glow_alpha * 0.45
+	)
+
+	outer_glow.border_color = Color(
+		gold_light,
+		glow_alpha
+	)
+
+	outer_glow.set_border_width_all(7)
+	outer_glow.set_corner_radius_all(17)
 
 	draw_style_box(
-		glow_style,
+		outer_glow,
 		Rect2(
-			Vector2(-9, -9),
-			card_size + Vector2(18, 18)
+			Vector2(
+				-glow_expansion,
+				-glow_expansion
+			),
+			card_size
+			+ Vector2(
+				glow_expansion * 2.0,
+				glow_expansion * 2.0
+			)
+		)
+	)
+
+	var inner_glow := StyleBoxFlat.new()
+
+	inner_glow.bg_color = Color(
+		gold_soft,
+		glow_alpha * 0.30
+	)
+
+	inner_glow.border_color = Color(
+		gold_light,
+		border_alpha
+	)
+
+	inner_glow.set_border_width_all(4)
+	inner_glow.set_corner_radius_all(14)
+
+	draw_style_box(
+		inner_glow,
+		Rect2(
+			Vector2(-5, -5),
+			card_size + Vector2(10, 10)
 		)
 	)
 
 
-func draw_selection_border():
+func draw_selection_border() -> void:
+	var pulse_amount: float = (
+		0.5
+		+ sin(selection_glow_phase) * 0.5
+	)
+
 	var border_style := StyleBoxFlat.new()
 
-	border_style.bg_color = Color(0, 0, 0, 0)
-	border_style.border_color = gold_light
+	border_style.bg_color = Color.TRANSPARENT
+
+	border_style.border_color = Color(
+		gold_light,
+		lerpf(
+			0.82,
+			1.0,
+			pulse_amount
+		)
+	)
+
 	border_style.set_border_width_all(3)
 	border_style.set_corner_radius_all(12)
 
 	draw_style_box(
 		border_style,
 		Rect2(
-			Vector2(-4, -4),
-			card_size + Vector2(8, 8)
+			Vector2(-3, -3),
+			card_size + Vector2(6, 6)
 		)
 	)
 
-	var inner_border := StyleBoxFlat.new()
+	var highlight := StyleBoxFlat.new()
 
-	inner_border.bg_color = Color(0, 0, 0, 0)
-	inner_border.border_color = Color(1, 0.94, 0.70, 0.72)
-	inner_border.set_border_width_all(1)
-	inner_border.set_corner_radius_all(9)
+	highlight.bg_color = Color.TRANSPARENT
+
+	highlight.border_color = Color(
+		1.0,
+		0.91,
+		0.60,
+		lerpf(
+			0.26,
+			0.52,
+			pulse_amount
+		)
+	)
+
+	highlight.border_width_top = 2
+	highlight.border_width_left = 2
+	highlight.set_corner_radius_all(11)
 
 	draw_style_box(
-		inner_border,
+		highlight,
 		Rect2(
-			Vector2(2, 2),
-			card_size - Vector2(4, 4)
+			Vector2(-1, -1),
+			card_size + Vector2(2, 2)
 		)
 	)
 

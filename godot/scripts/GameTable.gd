@@ -37,35 +37,36 @@ var walnut_dark := Color("#2B160D")
 var wild_marker: WildMarker
 var wild_reveal_sound: AudioStream
 
+
 const TABLE_WIDTH: float = 390.0
 
 # --------------------------------------------------------------------
-# PRODUCTION LAYOUT (matches reference artwork)
+# PRODUCTION LAYOUT
+# Scaled for the current 390 x 844 mobile viewport
 # --------------------------------------------------------------------
 
-const TABLE_WIDTH := 390.0
+const TITLE_Y: float = 5.0
+const HUD_Y: float = 113.0
 
-const TITLE_Y := 14.0
-const HUD_Y := 92.0
+const GRACE_SEAT_POSITION := Vector2(42.0, 168.0)
+const GRACE_HAND_Y: float = 228.0
 
-const GRACE_SEAT_POSITION := Vector2(18.0, 180.0)
-const GRACE_HAND_Y := 285.0
+const WILD_MARKER_POSITION := Vector2(195.0, 253.0)
 
-const WILD_MARKER_POSITION := Vector2(195.0, 340.0)
+const DECK_POSITION := Vector2(108.0, 318.0)
+const DISCARD_POSITION := Vector2(236.0, 318.0)
 
-const DECK_POSITION := Vector2(110.0, 410.0)
-const DISCARD_POSITION := Vector2(220.0, 410.0)
+const PLAYER_SEAT_POSITION := Vector2(17.0, 548.0)
+const PLAYER_HAND_Y: float = 558.0
+const PLAYER_HAND_LABEL_Y: float = 538.0
 
-const PLAYER_SEAT_POSITION := Vector2(18.0, 710.0)
-const PLAYER_HAND_Y := 790.0
-const PLAYER_HAND_LABEL_Y := 770.0
+const MESSAGE_POSITION := Vector2(24.0, 672.0)
 
-const MESSAGE_POSITION := Vector2(25.0, 885.0)
-
-const BUTTON_Y := 940.0
+const BUTTON_Y: float = 714.0
 
 var deck_position: Vector2 = DECK_POSITION
 var discard_position: Vector2 = DISCARD_POSITION
+
 var hand_position: Vector2 = Vector2(
 	TABLE_WIDTH / 2.0,
 	PLAYER_HAND_Y
@@ -169,84 +170,498 @@ func build_environment():
 	add_child(ambient_effects)
 
 
-func build_title():
-	var title_panel := Panel.new()
-	title_panel.position = Vector2(48, 12)
-	title_panel.size = Vector2(294, 78)
-	title_panel.z_index = 94
-	title_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+func build_title() -> void:
+	var sign_shadow := Panel.new()
+	sign_shadow.position = Vector2(28.0, 12.0)
+	sign_shadow.size = Vector2(334.0, 100.0)
+	sign_shadow.z_index = 92
+	sign_shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color("#4A0E18")
-	panel_style.border_color = Color("#D8A441")
-	panel_style.set_border_width_all(3)
-	panel_style.corner_radius_top_left = 16
-	panel_style.corner_radius_top_right = 16
-	panel_style.corner_radius_bottom_left = 10
-	panel_style.corner_radius_bottom_right = 10
-	panel_style.shadow_color = Color(0.0, 0.0, 0.0, 0.65)
-	panel_style.shadow_size = 8
+	var shadow_style := StyleBoxFlat.new()
+	shadow_style.bg_color = Color(0.02, 0.01, 0.01, 0.78)
+	shadow_style.corner_radius_top_left = 24
+	shadow_style.corner_radius_top_right = 24
+	shadow_style.corner_radius_bottom_left = 14
+	shadow_style.corner_radius_bottom_right = 14
 
-	title_panel.add_theme_stylebox_override(
+	sign_shadow.add_theme_stylebox_override(
 		"panel",
-		panel_style
+		shadow_style
 	)
 
-	add_child(title_panel)
+	add_child(sign_shadow)
+
+
+	var outer_sign := Panel.new()
+	outer_sign.position = Vector2(38, 8)
+	outer_sign.size = Vector2(314, 84)
+	outer_sign.z_index = 93
+	outer_sign.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var outer_style := StyleBoxFlat.new()
+	outer_style.bg_color = Color("#35120D")
+	outer_style.border_color = Color("#A86B20")
+	outer_style.set_border_width_all(3)
+
+	outer_style.corner_radius_top_left = 25
+	outer_style.corner_radius_top_right = 25
+	outer_style.corner_radius_bottom_left = 13
+	outer_style.corner_radius_bottom_right = 13
+
+	outer_sign.add_theme_stylebox_override(
+		"panel",
+		outer_style
+	)
+
+	add_child(outer_sign)
+
+
+	var gold_frame := Panel.new()
+	gold_frame.position = Vector2(5,5)
+	gold_frame.size = Vector2(304,72)
+	gold_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var gold_frame_style := StyleBoxFlat.new()
+	gold_frame_style.bg_color = Color("#641923")
+	gold_frame_style.border_color = Color("#E0A93E")
+	gold_frame_style.set_border_width_all(2)
+
+	gold_frame_style.corner_radius_top_left = 20
+	gold_frame_style.corner_radius_top_right = 20
+	gold_frame_style.corner_radius_bottom_left = 10
+	gold_frame_style.corner_radius_bottom_right = 10
+
+	gold_frame.add_theme_stylebox_override(
+		"panel",
+		gold_frame_style
+	)
+
+	outer_sign.add_child(gold_frame)
+
+
+	var inner_sign := Panel.new()
+	inner_sign.position = Vector2(5,5)
+	inner_sign.size = Vector2(294,62)
+	inner_sign.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var inner_style := StyleBoxFlat.new()
+	inner_style.bg_color = Color("#4B111A")
+	inner_style.border_color = Color("#7E421A")
+	inner_style.set_border_width_all(1)
+
+	inner_style.corner_radius_top_left = 16
+	inner_style.corner_radius_top_right = 16
+	inner_style.corner_radius_bottom_left = 8
+	inner_style.corner_radius_bottom_right = 8
+
+	inner_sign.add_theme_stylebox_override(
+		"panel",
+		inner_style
+	)
+
+	gold_frame.add_child(inner_sign)
+
+
+	var ornament := Label.new()
+	ornament.text = "✦  ❧  ✦"
+	ornament.position = Vector2(90.0, 0.0)
+	ornament.size = Vector2(140.0, 18.0)
+	ornament.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ornament.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	ornament.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	ornament.add_theme_font_size_override(
+		"font_size",
+		11
+	)
+
+	ornament.add_theme_color_override(
+		"font_color",
+		Color("#E9B94E")
+	)
+
+	inner_sign.add_child(ornament)
+
 
 	var title := Label.new()
 	title.text = "WILD HANDS"
+	title.position = Vector2(0,6)
+	title.size = Vector2(294,34)
+	title.add_theme_font_size_override("font_size",27)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title.position = Vector2(0, 4)
-	title.size = Vector2(294, 44)
-	title.add_theme_font_size_override("font_size", 31)
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
 	title.add_theme_color_override(
 		"font_color",
-		Color("#F1C76D")
+		Color("#F3CF78")
 	)
+
 	title.add_theme_color_override(
 		"font_shadow_color",
-		Color("#160704")
+		Color("#160503")
 	)
+
 	title.add_theme_constant_override(
 		"shadow_offset_x",
 		2
 	)
+
 	title.add_theme_constant_override(
 		"shadow_offset_y",
 		3
 	)
 
-	title_panel.add_child(title)
+	inner_sign.add_child(title)
+
+
+	var ribbon_shadow := Panel.new()
+	ribbon_shadow.position = Vector2(70,58)
+	ribbon_shadow.size = Vector2(170,22)
+	ribbon_shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var ribbon_shadow_style := StyleBoxFlat.new()
+	ribbon_shadow_style.bg_color = Color(
+		0.02,
+		0.01,
+		0.0,
+		0.80
+	)
+
+	ribbon_shadow_style.corner_radius_top_left = 5
+	ribbon_shadow_style.corner_radius_top_right = 5
+	ribbon_shadow_style.corner_radius_bottom_left = 8
+	ribbon_shadow_style.corner_radius_bottom_right = 8
+
+	ribbon_shadow.add_theme_stylebox_override(
+		"panel",
+		ribbon_shadow_style
+	)
+
+	outer_sign.add_child(ribbon_shadow)
+
+
+	var ribbon := Panel.new()
+	ribbon.position = Vector2(67.0, 69.0)
+	ribbon.size = Vector2(208.0, 28.0)
+	ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var ribbon_style := StyleBoxFlat.new()
+	ribbon_style.bg_color = Color("#B87A30")
+	ribbon_style.border_color = Color("#4A1D0A")
+	ribbon_style.set_border_width_all(2)
+
+	ribbon_style.corner_radius_top_left = 4
+	ribbon_style.corner_radius_top_right = 4
+	ribbon_style.corner_radius_bottom_left = 7
+	ribbon_style.corner_radius_bottom_right = 7
+
+	ribbon.add_theme_stylebox_override(
+		"panel",
+		ribbon_style
+	)
+
+	outer_sign.add_child(ribbon)
+
 
 	var subtitle := Label.new()
 	subtitle.text = "FRIDAY NIGHT AT GRACE'S"
+	subtitle.position = Vector2.ZERO
+	subtitle.size = ribbon.size
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	subtitle.position = Vector2(16, 45)
-	subtitle.size = Vector2(262, 25)
-	subtitle.add_theme_font_size_override("font_size", 13)
-	subtitle.add_theme_color_override(
-		"font_color",
-		Color("#F4E7D3")
+	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	subtitle.add_theme_font_size_override(
+		"font_size",
+		12
 	)
 
-	title_panel.add_child(subtitle)
+	subtitle.add_theme_color_override(
+		"font_color",
+		Color("#241006")
+	)
+
+	subtitle.add_theme_color_override(
+		"font_shadow_color",
+		Color(1.0, 0.82, 0.43, 0.30)
+	)
+
+	subtitle.add_theme_constant_override(
+		"shadow_offset_y",
+		1
+	)
+
+	ribbon.add_child(subtitle)
 
 
-func build_hud():
+func build_hud() -> void:
+	var hud_shadow := Panel.new()
+	hud_shadow.position = Vector2(20,96)
+	hud_shadow.size = Vector2(350,58)
+	hud_shadow.z_index = 93
+	hud_shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var shadow_style := StyleBoxFlat.new()
+	shadow_style.bg_color = Color(
+		0.01,
+		0.005,
+		0.0,
+		0.75
+	)
+
+	shadow_style.corner_radius_top_left = 11
+	shadow_style.corner_radius_top_right = 11
+	shadow_style.corner_radius_bottom_left = 11
+	shadow_style.corner_radius_bottom_right = 11
+
+	hud_shadow.add_theme_stylebox_override(
+		"panel",
+		shadow_style
+	)
+
+	add_child(hud_shadow)
+
+
+	var hud_frame := Panel.new()
+	hud_frame.position = Vector2(13.0, 113.0)
+	hud_frame.size = Vector2(364.0, 72.0)
+	hud_frame.z_index = 94
+	hud_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var frame_style := StyleBoxFlat.new()
+	frame_style.bg_color = Color("#26130B")
+	frame_style.border_color = Color("#A66A26")
+	frame_style.set_border_width_all(2)
+
+	frame_style.corner_radius_top_left = 10
+	frame_style.corner_radius_top_right = 10
+	frame_style.corner_radius_bottom_left = 10
+	frame_style.corner_radius_bottom_right = 10
+
+	hud_frame.add_theme_stylebox_override(
+		"panel",
+		frame_style
+	)
+
+	add_child(hud_frame)
+
+
+	var hud_inner := Panel.new()
+	hud_inner.position = Vector2(4,4)
+	hud_inner.size = Vector2(350,50)
+	hud_inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var inner_style := StyleBoxFlat.new()
+	inner_style.bg_color = Color(
+		0.08,
+		0.035,
+		0.015,
+		0.94
+	)
+
+	inner_style.border_color = Color("#5B3518")
+	inner_style.set_border_width_all(1)
+
+	inner_style.corner_radius_top_left = 7
+	inner_style.corner_radius_top_right = 7
+	inner_style.corner_radius_bottom_left = 7
+	inner_style.corner_radius_bottom_right = 7
+
+	hud_inner.add_theme_stylebox_override(
+		"panel",
+		inner_style
+	)
+
+	hud_frame.add_child(hud_inner)
+
+
+	var divider_one := ColorRect.new()
+	divider_one.position = Vector2(111.0, 9.0)
+	divider_one.size = Vector2(1.0, 46.0)
+	divider_one.color = Color(
+		0.75,
+		0.48,
+		0.20,
+		0.38
+	)
+
+	divider_one.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud_inner.add_child(divider_one)
+
+
+	var divider_two := ColorRect.new()
+	divider_two.position = Vector2(245.0, 9.0)
+	divider_two.size = Vector2(1.0, 46.0)
+	divider_two.color = Color(
+		0.75,
+		0.48,
+		0.20,
+		0.38
+	)
+
+	divider_two.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud_inner.add_child(divider_two)
+
+
+	var score_heading := Label.new()
+	score_heading.text = "SCORE"
+	score_heading.position = Vector2(9.0, 5.0)
+	score_heading.size = Vector2(94.0, 20.0)
+	score_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	score_heading.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	score_heading.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	score_heading.add_theme_font_size_override(
+		"font_size",
+		12
+	)
+
+	score_heading.add_theme_color_override(
+		"font_color",
+		Color("#EBCB81")
+	)
+
+	hud_inner.add_child(score_heading)
+
+
+	var score_value := Label.new()
+	score_value.text = str(game_state.player_scores[0])
+	score_value.position = Vector2(9.0, 22.0)
+	score_value.size = Vector2(94.0, 34.0)
+	score_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	score_value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	score_value.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	score_value.add_theme_font_size_override(
+		"font_size",
+		21
+	)
+
+	score_value.add_theme_color_override(
+		"font_color",
+		cream
+	)
+
+	score_value.add_theme_color_override(
+		"font_shadow_color",
+		Color("#120603")
+	)
+
+	score_value.add_theme_constant_override(
+		"shadow_offset_y",
+		2
+	)
+
+	hud_inner.add_child(score_value)
+
+
+	var wild_value := Label.new()
+	wild_value.text = "WILD = " + game_state.wild_label()
+	wild_value.position = Vector2(116.0, 7.0)
+	wild_value.size = Vector2(125.0, 49.0)
+	wild_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	wild_value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	wild_value.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	wild_value.add_theme_font_size_override(
+		"font_size",
+		18
+	)
+
+	wild_value.add_theme_color_override(
+		"font_color",
+		Color("#E7B64E")
+	)
+
+	wild_value.add_theme_color_override(
+		"font_shadow_color",
+		Color("#140502")
+	)
+
+	wild_value.add_theme_constant_override(
+		"shadow_offset_x",
+		1
+	)
+
+	wild_value.add_theme_constant_override(
+		"shadow_offset_y",
+		2
+	)
+
+	hud_inner.add_child(wild_value)
+
+
+	var round_heading := Label.new()
+	round_heading.text = "ROUND"
+	round_heading.position = Vector2(250.0, 5.0)
+	round_heading.size = Vector2(97.0, 20.0)
+	round_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	round_heading.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	round_heading.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	round_heading.add_theme_font_size_override(
+		"font_size",
+		12
+	)
+
+	round_heading.add_theme_color_override(
+		"font_color",
+		Color("#EBCB81")
+	)
+
+	hud_inner.add_child(round_heading)
+
+
+	var round_value := Label.new()
+	round_value.text = (
+		str(game_state.current_round)
+		+ " of "
+		+ str(game_state.total_rounds)
+	)
+
+	round_value.position = Vector2(250.0, 22.0)
+	round_value.size = Vector2(97.0, 34.0)
+	round_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	round_value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	round_value.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	round_value.add_theme_font_size_override(
+		"font_size",
+		18
+	)
+
+	round_value.add_theme_color_override(
+		"font_color",
+		cream
+	)
+
+	round_value.add_theme_color_override(
+		"font_shadow_color",
+		Color("#120603")
+	)
+
+	round_value.add_theme_constant_override(
+		"shadow_offset_y",
+		2
+	)
+
+	hud_inner.add_child(round_value)
+
+
 	game_hud = GameHudScene.instantiate()
-	game_hud.position = Vector2(20, 88)
+	game_hud.position = Vector2(20.0, 112.0)
 	game_hud.z_index = 95
+	game_hud.visible = false
 	add_child(game_hud)
 
 	refresh_hud("Your Turn")
 
 
-func build_wild_marker():
+func build_wild_marker() -> void:
 	wild_marker = WildMarker.new()
-	wild_marker.position = Vector2(195, 365)
+	wild_marker.position = WILD_MARKER_POSITION
 	wild_marker.z_index = 75
 	add_child(wild_marker)
 
@@ -254,6 +669,7 @@ func build_wild_marker():
 
 	if ResourceLoader.exists(sound_path):
 		wild_reveal_sound = load(sound_path)
+
 
 func refresh_hud(turn_text: String):
 	if game_hud == null:
@@ -311,21 +727,41 @@ func add_player_seat(
 		)
 
 
-func build_deck_and_discard():
+func build_deck_and_discard() -> void:
 	deck_visual = DeckScene.instantiate()
 	deck_visual.position = deck_position
 	deck_visual.rotation_degrees = -3.0
 	deck_visual.z_index = 2
 	add_child(deck_visual)
 
-	add_label(
-		"Deck",
+	var deck_label := add_label(
+		"DECK",
 		Vector2(
-			deck_position.x + 24,
-			deck_position.y + 125
+			deck_position.x - 2.0,
+			deck_position.y + 119.0
 		),
 		cream,
-		14
+		13
+	)
+
+	deck_label.size = Vector2(82.0, 22.0)
+	deck_label.horizontal_alignment = (
+		HORIZONTAL_ALIGNMENT_CENTER
+	)
+
+	deck_label.add_theme_color_override(
+		"font_shadow_color",
+		walnut_dark
+	)
+
+	deck_label.add_theme_constant_override(
+		"shadow_offset_x",
+		1
+	)
+
+	deck_label.add_theme_constant_override(
+		"shadow_offset_y",
+		2
 	)
 
 	var discard_slot: Node2D = (
@@ -337,14 +773,34 @@ func build_deck_and_discard():
 	discard_slot.z_index = 2
 	add_child(discard_slot)
 
-	add_label(
-		"Discard",
+	var discard_label := add_label(
+		"DISCARD",
 		Vector2(
-			discard_position.x + 14,
-			discard_position.y + 125
+			discard_position.x - 2.0,
+			discard_position.y + 119.0
 		),
 		cream,
-		14
+		13
+	)
+
+	discard_label.size = Vector2(82.0, 22.0)
+	discard_label.horizontal_alignment = (
+		HORIZONTAL_ALIGNMENT_CENTER
+	)
+
+	discard_label.add_theme_color_override(
+		"font_shadow_color",
+		walnut_dark
+	)
+
+	discard_label.add_theme_constant_override(
+		"shadow_offset_x",
+		1
+	)
+
+	discard_label.add_theme_constant_override(
+		"shadow_offset_y",
+		2
 	)
 
 	build_pile_tap_buttons()
@@ -419,35 +875,85 @@ func create_pile_tap_button(
 
 
 func build_hand_marker() -> void:
-	var marker_shadow: Label = add_label(
-		"YOUR HAND",
-		Vector2(
-			145.0,
-			PLAYER_HAND_LABEL_Y + 2.0
-		),
-		walnut_dark,
-		14
+	var marker_panel := Panel.new()
+	marker_panel.position = Vector2(
+		137.0,
+		PLAYER_HAND_LABEL_Y - 2.0
+	)
+	marker_panel.size = Vector2(116.0, 25.0)
+	marker_panel.z_index = 89
+	marker_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var marker_style := StyleBoxFlat.new()
+	marker_style.bg_color = Color(
+		0.10,
+		0.04,
+		0.02,
+		0.82
+	)
+	marker_style.border_color = Color(
+		gold.r,
+		gold.g,
+		gold.b,
+		0.80
 	)
 
-	marker_shadow.size = Vector2(102.0, 22.0)
-	marker_shadow.horizontal_alignment = (
-		HORIZONTAL_ALIGNMENT_CENTER
+	marker_style.set_border_width_all(1)
+
+	marker_style.corner_radius_top_left = 9
+	marker_style.corner_radius_top_right = 9
+	marker_style.corner_radius_bottom_left = 9
+	marker_style.corner_radius_bottom_right = 9
+
+	marker_style.shadow_color = Color(
+		0.0,
+		0.0,
+		0.0,
+		0.50
+	)
+	marker_style.shadow_size = 4
+	marker_style.shadow_offset = Vector2(0.0, 2.0)
+
+	marker_panel.add_theme_stylebox_override(
+		"panel",
+		marker_style
 	)
 
-	var marker: Label = add_label(
-		"YOUR HAND",
-		Vector2(
-			143.0,
-			PLAYER_HAND_LABEL_Y
-		),
-		gold,
-		14
+	add_child(marker_panel)
+
+	var marker := Label.new()
+	marker.text = "YOUR HAND"
+	marker.position = Vector2.ZERO
+	marker.size = marker_panel.size
+	marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	marker.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+
+	marker.add_theme_font_size_override(
+		"font_size",
+		13
 	)
 
-	marker.size = Vector2(102.0, 22.0)
-	marker.horizontal_alignment = (
-		HORIZONTAL_ALIGNMENT_CENTER
+	marker.add_theme_color_override(
+		"font_color",
+		Color("#F1C76D")
 	)
+
+	marker.add_theme_color_override(
+		"font_shadow_color",
+		Color("#160704")
+	)
+
+	marker.add_theme_constant_override(
+		"shadow_offset_x",
+		1
+	)
+
+	marker.add_theme_constant_override(
+		"shadow_offset_y",
+		2
+	)
+
+	marker_panel.add_child(marker)
 
 func build_message() -> void:
 	message_banner = MessageBannerScene.instantiate()
@@ -462,25 +968,29 @@ func build_buttons() -> void:
 	discard_button = ActionButtonScene.instantiate()
 	discard_button.text = "Discard"
 	discard_button.position = Vector2(
-		76.0,
+		68.0,
 		BUTTON_Y
 	)
 	discard_button.z_index = 110
+
 	discard_button.pressed.connect(
 		discard_selected_card
 	)
+
 	add_child(discard_button)
 
 	go_out_button = ActionButtonScene.instantiate()
 	go_out_button.text = "Go Out"
 	go_out_button.position = Vector2(
-		215.0,
+		218.0,
 		BUTTON_Y
 	)
 	go_out_button.z_index = 110
+
 	go_out_button.pressed.connect(
 		on_primary_button_pressed
 	)
+
 	add_child(go_out_button)
 
 	update_action_buttons()
@@ -621,67 +1131,73 @@ func clear_discard_cards():
 
 	discard_cards.clear()
 
-func refresh_discard_pile_visuals(
-	duration: float = 0.20
-):
-	var visible_card_count: int = 4
-	var first_visible_index: int = maxi(
-		discard_cards.size() - visible_card_count,
-		0
+func refresh_discard_pile_visuals():
+
+	var visible_cards := mini(
+		5,
+		discard_cards.size()
 	)
 
-	for i: int in range(discard_cards.size()):
-		var card: Node2D = discard_cards[i]
+	for i in range(discard_cards.size()):
+
+		var card = discard_cards[i]
 
 		if not is_instance_valid(card):
 			continue
 
-		var should_show: bool = (
-			i >= first_visible_index
-		)
+		var depth := discard_cards.size() - 1 - i
 
-		card.visible = should_show
+		card.visible = depth < visible_cards
 
-		if not should_show:
+		if not card.visible:
 			continue
 
-		var visible_index: int = (
-			i - first_visible_index
+		var x_offset := depth * -2.0
+		var y_offset := depth * 1.2
+
+		card.position = discard_position + Vector2(
+			x_offset,
+			y_offset
 		)
 
-		var visible_total: int = (
-			discard_cards.size()
-			- first_visible_index
+		card.rotation_degrees = lerpf(
+			-6.0,
+			6.0,
+			randf()
 		)
 
-		var distance_from_top: int = (
-			visible_total
-			- 1
-			- visible_index
-		)
+		card.z_index = 20 + i
 
-		var target_offset := Vector2(
-			-float(distance_from_top) * 1.5,
-			-float(distance_from_top) * 2.0
-		)
 
-		var target_rotation: float = (
-			float(distance_from_top) * -1.2
-		)
+func animate_top_discard():
 
-		card.z_index = 20 + visible_index
+	if discard_cards.is_empty():
+		return
 
-		if card.has_method("move_to"):
-			card.move_to(
-				discard_position + target_offset,
-				target_rotation,
-				duration
-			)
-		else:
-			card.position = (
-				discard_position + target_offset
-			)
-			card.rotation_degrees = target_rotation
+	var top = discard_cards.back()
+
+	if not is_instance_valid(top):
+		return
+
+	var start_rotation: float = top.rotation_degrees
+
+	var tween := create_tween()
+
+	tween.set_loops()
+
+	tween.tween_property(
+		top,
+		"rotation_degrees",
+		start_rotation + 2.0,
+		1.5
+	)
+
+	tween.tween_property(
+		top,
+		"rotation_degrees",
+		start_rotation - 2.0,
+		1.5
+	)
 
 
 func clear_grace_hand_cards():
@@ -1011,12 +1527,32 @@ func deal_player_card_to_position(
 	card_count: int,
 	duration: float,
 	delay: float
-):
-	var spacing: float = get_hand_spacing(
-		card_count
+) -> void:
+	var card_scale: float = 1.0
+
+	if card_count >= 7:
+		card_scale = 0.90
+
+	if card_count >= 9:
+		card_scale = 0.82
+
+	if card_count >= 11:
+		card_scale = 0.74
+
+	var card_width: float = 82.0 * card_scale
+	var side_margin: float = 25.0
+
+	var available_spacing_width: float = (
+		TABLE_WIDTH
+		- side_margin * 2.0
+		- card_width
 	)
 
-	var card_width: float = 82.0
+	var spacing: float = minf(
+		get_hand_spacing(card_count),
+		available_spacing_width
+		/ float(maxi(card_count - 1, 1))
+	)
 
 	var total_width: float = (
 		spacing * float(card_count - 1)
@@ -1024,27 +1560,62 @@ func deal_player_card_to_position(
 	)
 
 	var start_x: float = (
-		390.0 - total_width
+		TABLE_WIDTH - total_width
 	) / 2.0
 
 	var center_index: float = (
 		float(card_count - 1) / 2.0
 	)
 
-	var distance_from_center: float = abs(
-		float(card_index) - center_index
+	var half_span: float = maxf(
+		center_index,
+		1.0
+	)
+
+	var normalized_offset: float = (
+		(float(card_index) - center_index)
+		/ half_span
+	)
+
+	var maximum_rotation: float = 12.0
+	var maximum_curve_depth: float = 13.0
+
+	if card_count <= 3:
+		maximum_rotation = 8.0
+		maximum_curve_depth = 6.0
+	elif card_count <= 5:
+		maximum_rotation = 11.0
+		maximum_curve_depth = 10.0
+	elif card_count <= 7:
+		maximum_rotation = 13.0
+		maximum_curve_depth = 14.0
+	elif card_count <= 9:
+		maximum_rotation = 12.0
+		maximum_curve_depth = 13.0
+	elif card_count <= 11:
+		maximum_rotation = 10.0
+		maximum_curve_depth = 11.0
+	else:
+		maximum_rotation = 8.0
+		maximum_curve_depth = 9.0
+
+	var curve_strength: float = (
+		normalized_offset * normalized_offset
 	)
 
 	var target := Vector2(
 		start_x + float(card_index) * spacing,
-		hand_position.y
-		+ distance_from_center
-		* get_curve_amount(card_count)
+		PLAYER_HAND_Y
+		+ curve_strength * maximum_curve_depth
 	)
 
 	var rotation: float = (
-		(float(card_index) - center_index)
-		* get_grace_rotation_amount(card_count)
+		normalized_offset * maximum_rotation
+	)
+
+	card.scale = Vector2(
+		card_scale,
+		card_scale
 	)
 
 	card.z_index = 10 + card_index
@@ -1056,10 +1627,13 @@ func deal_player_card_to_position(
 			duration,
 			delay,
 			Vector2(
-				deal_rng.randf_range(-3.0, 3.0),
-				deal_rng.randf_range(-2.0, 2.0)
+				deal_rng.randf_range(-2.0, 2.0),
+				deal_rng.randf_range(-1.0, 1.0)
 			)
 		)
+	else:
+		card.position = target
+		card.rotation_degrees = rotation
 
 
 func create_opening_discard():
@@ -1500,37 +2074,146 @@ func perform_discard(
 	discard_timer.tween_callback(start_grace_turn)
 
 
-func start_grace_turn():
+func start_grace_turn() -> void:
 	if round_over:
 		return
 
 	begin_animation_lock()
 
 	set_turn_message("Grace's Turn")
-	set_message("Grace is looking at the discard pile...")
 
-	var think_timer := create_tween()
+	var top_discard_data: Dictionary = (
+		get_top_discard_data()
+	)
 
-	think_timer.tween_interval(0.60)
+	if top_discard_data.is_empty():
+		set_message(
+			"Grace glances at the empty discard pile."
+		)
+	else:
+		var opening_messages: Array[String] = [
+			"Grace studies the discard pile...",
+			"Grace looks over your discard...",
+			"Grace considers the card on the table...",
+			"Grace takes a closer look at the discard..."
+		]
+
+		set_message(
+			opening_messages[
+				deal_rng.randi_range(
+					0,
+					opening_messages.size() - 1
+				)
+			]
+		)
+
+	var first_think_time: float = (
+		deal_rng.randf_range(
+			0.55,
+			0.95
+		)
+	)
+
+	var think_timer: Tween = create_tween()
+
+	think_timer.tween_interval(
+		first_think_time
+	)
 
 	think_timer.tween_callback(func():
+		if round_over:
+			return
 
-		var top_discard_data := get_top_discard_data()
+		var current_discard_data: Dictionary = (
+			get_top_discard_data()
+		)
 
-		var take_discard := false
+		var take_discard: bool = false
 
-		if not top_discard_data.is_empty():
-			take_discard = grace_ai.should_take_discard(
-				grace_hand_data,
-				top_discard_data
+		if not current_discard_data.is_empty():
+			take_discard = (
+				grace_ai.should_take_discard(
+					grace_hand_data,
+					current_discard_data
+				)
 			)
 
 		if take_discard:
-			set_message("Grace reaches for the discard pile...")
-			grace_draw_from_discard(top_discard_data)
+			var discard_messages: Array[String] = [
+				"Grace smiles. \"I'll take that.\"",
+				"Grace reaches for your discard...",
+				"Grace nods and takes the card.",
+				"Grace says, \"That might help.\""
+			]
+
+			set_message(
+				discard_messages[
+					deal_rng.randi_range(
+						0,
+						discard_messages.size() - 1
+					)
+				]
+			)
+
+			var reach_delay: float = (
+				deal_rng.randf_range(
+					0.25,
+					0.48
+				)
+			)
+
+			var reach_timer: Tween = create_tween()
+
+			reach_timer.tween_interval(
+				reach_delay
+			)
+
+			reach_timer.tween_callback(func():
+				if round_over:
+					return
+
+				grace_draw_from_discard(
+					current_discard_data
+				)
+			)
 		else:
-			set_message("Grace decides to draw from the deck.")
-			grace_draw_from_deck()
+			var deck_messages: Array[String] = [
+				"Grace decides to try the deck.",
+				"Grace leaves the discard where it is.",
+				"Grace says, \"Not this time, honey.\"",
+				"Grace turns her attention to the deck."
+			]
+
+			set_message(
+				deck_messages[
+					deal_rng.randi_range(
+						0,
+						deck_messages.size() - 1
+					)
+				]
+			)
+
+			var deck_reach_delay: float = (
+				deal_rng.randf_range(
+					0.28,
+					0.52
+				)
+			)
+
+			var deck_reach_timer: Tween = (
+				create_tween()
+			)
+
+			deck_reach_timer.tween_interval(
+				deck_reach_delay
+			)
+
+			deck_reach_timer.tween_callback(func():
+				if round_over:
+					return
+
+				grace_draw_from_deck()
+			)
 	)
 
 
@@ -1593,75 +2276,59 @@ func arrange_grace_hidden_hand(
 	duration: float = 0.30,
 	stagger: bool = false
 ) -> void:
-	var count: int = grace_hand_cards.size()
+
+	var count := grace_hand_cards.size()
 
 	if count == 0:
 		return
 
-	var card_scale: float = 0.64
-	var card_width: float = 82.0 * card_scale
-	var side_margin: float = 26.0
+	var card_scale := 0.64
+	var card_width := 82.0 * card_scale
+	var side_margin := 26.0
 
-	var available_spacing_width: float = (
+	var available_width := (
 		TABLE_WIDTH
 		- side_margin * 2.0
 		- card_width
 	)
 
-	var spacing: float = minf(
-		31.0,
-		available_spacing_width
-		/ float(maxi(count - 1, 1))
+	var spacing := minf(
+		26.0,
+		available_width / float(maxi(count - 1, 1))
 	)
 
-	var total_width: float = (
-		spacing * float(count - 1)
-		+ card_width
-	)
+	var total_width := spacing * float(count - 1) + card_width
+	var start_x := (TABLE_WIDTH - total_width) / 2.0
 
-	var start_x: float = (
-		TABLE_WIDTH - total_width
-	) / 2.0
+	var center := float(count - 1) / 2.0
 
-	var center_index: float = (
-		float(count - 1) / 2.0
-	)
+	for i in range(count):
 
-	var rotation_amount: float = 3.0
-
-	if count > 7:
-		rotation_amount = 2.0
-
-	if count > 10:
-		rotation_amount = 1.3
-
-	for i: int in range(count):
 		var card: Node2D = grace_hand_cards[i]
 
-		if not is_instance_valid(card):
+		if !is_instance_valid(card):
 			continue
 
-		var card_index: float = float(i)
+		var offset := float(i) - center
+		var distance := absf(offset)
 
-		var distance_from_center: float = absf(
-			card_index - center_index
+		var target := Vector2(
+			start_x + float(i) * spacing,
+			GRACE_HAND_Y + distance * 3.0
 		)
 
-		var target: Vector2 = Vector2(
-			start_x + card_index * spacing,
-			GRACE_HAND_Y
-			+ distance_from_center * 1.0
-		)
+		var rotation := offset * 5.0
 
-		var rotation: float = (
-			(card_index - center_index)
-			* rotation_amount
-		)
+		if count >= 8:
+			rotation *= 0.9
 
-		var card_delay: float = 0.0
+		if count >= 11:
+			rotation *= 0.8
+
+		var delay := 0.0
 
 		if stagger:
-			card_delay = card_index * 0.03
+			delay = float(i) * 0.025
 
 		card.scale = Vector2(card_scale, card_scale)
 		card.z_index = 30 + i
@@ -1671,7 +2338,7 @@ func arrange_grace_hidden_hand(
 				target,
 				rotation,
 				duration,
-				card_delay
+				delay
 			)
 		else:
 			card.position = target
@@ -2378,16 +3045,16 @@ func arrange_hand(
 	var card_scale: float = 1.0
 
 	if count >= 7:
-		card_scale = 0.92
+		card_scale = 0.90
 
 	if count >= 9:
-		card_scale = 0.84
+		card_scale = 0.82
 
 	if count >= 11:
-		card_scale = 0.76
+		card_scale = 0.74
 
 	var card_width: float = 82.0 * card_scale
-	var side_margin: float = 27.0
+	var side_margin: float = 25.0
 
 	var available_spacing_width: float = (
 		TABLE_WIDTH
@@ -2414,16 +3081,32 @@ func arrange_hand(
 		float(count - 1) / 2.0
 	)
 
-	var rotation_amount: float = 4.0
-	var curve_amount: float = 6.0
+	var half_span: float = maxf(
+		center_index,
+		1.0
+	)
 
-	if count > 7:
-		rotation_amount = 2.4
-		curve_amount = 3.5
+	var maximum_rotation: float = 12.0
+	var maximum_curve_depth: float = 13.0
 
-	if count > 10:
-		rotation_amount = 1.6
-		curve_amount = 2.0
+	if count <= 3:
+		maximum_rotation = 8.0
+		maximum_curve_depth = 6.0
+	elif count <= 5:
+		maximum_rotation = 11.0
+		maximum_curve_depth = 10.0
+	elif count <= 7:
+		maximum_rotation = 13.0
+		maximum_curve_depth = 14.0
+	elif count <= 9:
+		maximum_rotation = 12.0
+		maximum_curve_depth = 13.0
+	elif count <= 11:
+		maximum_rotation = 10.0
+		maximum_curve_depth = 11.0
+	else:
+		maximum_rotation = 8.0
+		maximum_curve_depth = 9.0
 
 	for i: int in range(count):
 		var card: Node2D = player_hand.cards[i]
@@ -2433,23 +3116,23 @@ func arrange_hand(
 
 		var card_index: float = float(i)
 
-		var distance_from_center: float = absf(
-			card_index - center_index
+		var normalized_offset: float = (
+			(card_index - center_index)
+			/ half_span
 		)
 
-		var curve_offset: float = (
-			distance_from_center
-			* curve_amount
+		var curve_strength: float = (
+			normalized_offset * normalized_offset
 		)
 
 		var target: Vector2 = Vector2(
 			start_x + card_index * spacing,
-			PLAYER_HAND_Y + curve_offset
+			PLAYER_HAND_Y
+			+ curve_strength * maximum_curve_depth
 		)
 
 		var rotation: float = (
-			(card_index - center_index)
-			* rotation_amount
+			normalized_offset * maximum_rotation
 		)
 
 		var card_delay: float = 0.0
@@ -2458,11 +3141,19 @@ func arrange_hand(
 			card_delay = card_index * 0.045
 
 		var deal_variation: Vector2 = Vector2(
-			deal_rng.randf_range(-3.0, 3.0),
-			deal_rng.randf_range(-2.0, 2.0)
+			deal_rng.randf_range(-2.0, 2.0),
+			deal_rng.randf_range(-1.0, 1.0)
 		)
 
-		card.scale = Vector2(card_scale, card_scale)
+		if card == selected_card:
+			card.z_index = 100
+			continue
+
+		card.scale = Vector2(
+			card_scale,
+			card_scale
+		)
+
 		card.z_index = 10 + i
 
 		if (
@@ -2492,21 +3183,21 @@ func get_hand_spacing(
 	card_count: int
 ) -> float:
 	if card_count <= 3:
-		return 88.0
+		return 72.0
 
 	if card_count <= 5:
-		return 64.0
+		return 55.0
 
 	if card_count <= 7:
-		return 44.0
+		return 39.0
 
 	if card_count <= 9:
-		return 32.0
+		return 29.0
 
 	if card_count <= 11:
-		return 25.0
+		return 22.0
 
-	return 22.0
+	return 19.0
 
 
 func get_curve_amount(
@@ -2555,7 +3246,10 @@ func create_card(
 	return card
 
 
-func on_card_selected(card: Node2D):
+
+func on_card_selected(
+	card: Node2D
+) -> void:
 	if round_over or is_animating:
 		return
 
@@ -2572,7 +3266,6 @@ func on_card_selected(card: Node2D):
 			"You must keep the card taken from "
 			+ "the discard pile. Select another card."
 		)
-
 	elif (
 		has_drawn
 		and player_hand.can_go_out_after_discard(card)
@@ -2580,18 +3273,29 @@ func on_card_selected(card: Node2D):
 		set_message(
 			"That discard lets you go out!"
 		)
-
 	else:
 		set_message("Selected card.")
 
 	update_action_buttons()
 
 
-func on_card_deselected(card: Node2D):
-	if selected_card == card:
-		selected_card = null
-		set_message("Card deselected.")
-		update_action_buttons()
+func on_card_deselected(
+	card: Node2D
+) -> void:
+	if selected_card != card:
+		return
+
+	selected_card = null
+
+	arrange_hand(
+		0.18,
+		false,
+		false
+	)
+
+	set_message("Card deselected.")
+
+	update_action_buttons()
 
 
 func add_label(
